@@ -18,6 +18,8 @@ const MESSAGES = {
     MISSING_TOKEN: 'Falta el token de sesión',
     INVALID_SESSION: 'Sesión inválida o expirada',
     INTERNAL_ERROR: 'Error interno del servidor',
+    AGENT_NOT_CONFIGURED: 'Reapli no está configurado en el servidor',
+    AGENT_UNAVAILABLE: 'Reapli no está disponible en este momento',
   },
   en: {
     NO_PAYMENT_METHOD: 'Add a card in Payment methods before buying',
@@ -33,6 +35,8 @@ const MESSAGES = {
     MISSING_TOKEN: 'Missing session token',
     INVALID_SESSION: 'Invalid or expired session',
     INTERNAL_ERROR: 'Internal server error',
+    AGENT_NOT_CONFIGURED: 'Reapli is not configured on the server',
+    AGENT_UNAVAILABLE: 'Reapli is unavailable right now',
   },
 };
 

@@ -13,12 +13,6 @@ export const config = {
     anonKey: 'tu_supabase_anon_key_aqui',
   },
 
-  // Gemini AI
-  gemini: {
-    apiKey: 'tu_gemini_api_key_aqui',
-    model: 'gemini-3.8-flash',
-  },
-
   // Backend (proxy hacia Reap; prodUrl debe ser HTTPS para el returnUrl)
   backend: {
     devUrl: 'http://localhost:3000',

@@ -15,12 +15,11 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {Content} from '@google/generative-ai';
 import type {RootStackParamList} from '../types/navigation';
 import type {Contact} from '../types/contact';
 import type {PaymentProviderName, Product, Quote} from '../types/commerce';
 import type {PurchaseRequest} from '../types/purchaseRequest';
-import {processMessageWithAI, type FunctionCall, type ShippingCatalog} from '../lib/geminiAgent';
+import {processMessageWithAI, type ChatTurn, type FunctionCall, type ShippingCatalog} from '../lib/geminiAgent';
 import {getContacts, findContact, hasShippingAddress} from '../lib/contacts';
 import {getMerchants, getPaymentSetup, searchProducts, ApiError} from '../lib/commerceApi';
 import {
@@ -81,10 +80,10 @@ function welcomeMessage(text: string): Message {
 }
 
 // Gemini needs the history to start with a user turn and only carries text.
-function toGeminiHistory(stored: {sender: 'user' | 'ai'; text: string}[]): Content[] {
-  const turns = stored.slice(-MAX_HISTORY_TURNS * 2).map(m => ({
+function toGeminiHistory(stored: {sender: 'user' | 'ai'; text: string}[]): ChatTurn[] {
+  const turns: ChatTurn[] = stored.slice(-MAX_HISTORY_TURNS * 2).map(m => ({
     role: m.sender === 'user' ? 'user' : 'model',
-    parts: [{text: m.text}],
+    text: m.text,
   }));
   const firstUser = turns.findIndex(t => t.role === 'user');
   return firstUser === -1 ? [] : turns.slice(firstUser);
@@ -100,7 +99,7 @@ export default function ChatScreen({navigation}: Props) {
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
   const [provider, setProvider] = useState<PaymentProviderName>();
   const [shippingCatalog, setShippingCatalog] = useState<ShippingCatalog[]>([]);
-  const historyRef = useRef<Content[]>([]);
+  const historyRef = useRef<ChatTurn[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
   const loadContext = useCallback(async () => {
@@ -465,8 +464,8 @@ export default function ChatScreen({navigation}: Props) {
         : aiResponse.text;
       historyRef.current = [
         ...historyRef.current,
-        {role: 'user', parts: [{text: userMessage}]},
-        {role: 'model', parts: [{text: modelTurn}]},
+        {role: 'user' as const, text: userMessage},
+        {role: 'model' as const, text: modelTurn},
       ].slice(-MAX_HISTORY_TURNS * 2);
 
       if (aiResponse.functionCall) {

@@ -1,97 +1,15 @@
 /**
- * Reapli: the Gemini shopping agent with Function Calling
+ * Reapli client
  *
- * El agente interpreta lo que pide el usuario y decide qué acción tomar.
- * Nunca maneja datos de tarjeta ni cobra sin confirmación del usuario.
+ * Reapli (Gemini) runs on the backend: the API key never ships inside the app.
+ * Here we only send the message, a minimal context and the recent history.
  */
 
-import {
-  GoogleGenerativeAI,
-  SchemaType,
-  type Content,
-  type FunctionDeclaration,
-} from '@google/generative-ai';
 import type {Contact} from '../types/contact';
 import type {PurchaseRequest} from '../types/purchaseRequest';
 import type {PaymentProviderName} from '../types/commerce';
-import {config} from '../config';
+import {askAgent} from './commerceApi';
 import {translate, type Language} from './i18n';
-
-const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-
-const functionDeclarations: FunctionDeclaration[] = [
-  {
-    name: 'create_purchase_request',
-    description:
-      'Registra que alguien necesita algo y busca opciones para comprarlo. ' +
-      'Úsala cuando el usuario pide comprar o enviar un artículo a un contacto o para sí mismo.',
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        item_description: {
-          type: SchemaType.STRING,
-          description: 'Qué se necesita, en términos de búsqueda de producto (ej: "teclado inalámbrico low-profile")',
-        },
-        contact: {
-          type: SchemaType.STRING,
-          description: 'Nombre o nickname del contacto que recibirá la compra. Omitir si es para el propio usuario.',
-        },
-        max_amount: {
-          type: SchemaType.NUMBER,
-          description: 'Tope de gasto mencionado por el usuario. Omitir si no lo dijo.',
-        },
-        currency: {
-          type: SchemaType.STRING,
-          description: 'Código ISO de moneda del tope (MXN, USD...). Por defecto MXN.',
-        },
-      },
-      required: ['item_description'],
-    },
-  },
-  {
-    name: 'fulfill_purchase_request',
-    description: 'Retoma una solicitud de compra pendiente de un contacto para buscar opciones y pagarla.',
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        contact: {
-          type: SchemaType.STRING,
-          description: 'Nombre o nickname del contacto cuya solicitud se va a atender',
-        },
-      },
-      required: ['contact'],
-    },
-  },
-  {
-    name: 'set_language',
-    description:
-      'Cambia el idioma de la app y de la conversación. Úsala cuando el usuario pida hablar en otro idioma ' +
-      '(ej: "speak English", "habla en español", "cambia a inglés").',
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        language: {
-          type: SchemaType.STRING,
-          description: 'Idioma destino: "es" para español o "en" para inglés',
-        },
-      },
-      required: ['language'],
-    },
-  },
-  {
-    name: 'list_purchase_requests',
-    description: 'Lista las solicitudes de compra del usuario y su estado.',
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        status: {
-          type: SchemaType.STRING,
-          description: 'open (pendientes o en curso), completed, o all',
-        },
-      },
-    },
-  },
-];
 
 export interface ShippingCatalog {
   country: string;
@@ -107,10 +25,10 @@ export interface AIContext {
   language: Language;
 }
 
-const PROVIDER_DESCRIPTIONS: Record<PaymentProviderName, string> = {
-  reap: 'Reap Agentic Payments: el usuario aprueba cada cargo en una página segura de Reap',
-  kwal: 'Kwal: la tarjeta de Reapli está respaldada por USDC en la bóveda del usuario (Ink Sepolia)',
-};
+export interface ChatTurn {
+  role: 'user' | 'model';
+  text: string;
+}
 
 export interface FunctionCall {
   name: string;
@@ -122,81 +40,38 @@ export interface AIResponse {
   functionCall?: FunctionCall;
 }
 
-function buildSystemPrompt(context: AIContext): string {
-  const contactsInfo = context.contacts
-    .map(c => {
-      const parts = [`- ${c.name}`];
-      if (c.nickname) parts.push(`(nickname: "${c.nickname}")`);
-      if (c.city) parts.push(`· vive en ${c.city}, ${c.country}`);
-      if (c.spend_limit) parts.push(`· tope por compra ${c.spend_limit} ${c.currency}`);
-      return parts.join(' ');
-    })
-    .join('\n');
-
-  const requestsInfo = context.openRequests
-    .map(r => `- ${r.contact_name || 'Tú'}: ${r.item_description} (${r.status})`)
-    .join('\n');
-
-  const catalogInfo = context.shippingCatalog
-    .map(c => `- Envíos a ${c.country}: ${c.categories.join(', ')}`)
-    .join('\n');
-
-  return `Eres Reapli, el agente de compras de la app Transfertronix. Compras cosas por el usuario y para sus contactos (familia, equipo o amigos).
-Tu nombre es Reapli; si te preguntan quién eres, preséntate así.
-Pagos: ${context.provider ? PROVIDER_DESCRIPTIONS[context.provider] : 'no disponible'}.
-Tú buscas y cotizas; el usuario confirma cada compra. Nunca pidas ni manejes datos de tarjeta.
-
-CONTACTOS:
-${contactsInfo || 'Sin contactos'}
-
-SOLICITUDES ABIERTAS:
-${requestsInfo || 'Ninguna'}
-
-COMERCIOS COMPATIBLES POR PAÍS DE ENVÍO (solo se puede comprar aquí):
-${catalogInfo || 'Sin datos'}
-
-MÉTODO DE PAGO: ${context.hasPaymentMethod ? 'listo' : 'no listo (sugiere revisarlo desde el botón 💳)'}
-
-Reglas:
-- Si el usuario pide comprar o mandar algo, llama create_purchase_request.
-- Si menciona atender o pagar lo que pidió un contacto, llama fulfill_purchase_request.
-- Si pregunta por sus pedidos o solicitudes, llama list_purchase_requests.
-- Si pide hablar en otro idioma (inglés o español), llama set_language.
-- Si lo que piden no está en las categorías que envían al país del contacto, dilo y sugiere algo que sí esté.
-- Fuera de alcance: viajes, apuestas, contenido para adultos y categorías restringidas.
-- Idioma actual de la conversación: ${context.language === 'en' ? 'inglés (English)' : 'español'}. Responde SIEMPRE en ese idioma, breve y amigable.
-- Al llamar create_purchase_request, escribe item_description en el idioma en que el usuario lo pidió.`;
+/** Only what Reapli needs to decide: no addresses, phones or emails leave the device for the LLM. */
+function minimalContext(context: AIContext) {
+  return {
+    contacts: context.contacts.map(c => ({
+      name: c.name,
+      nickname: c.nickname,
+      city: c.city,
+      country: c.country,
+      spend_limit: c.spend_limit,
+      currency: c.currency,
+    })),
+    openRequests: context.openRequests.map(r => ({
+      contact_name: r.contact_name,
+      item_description: r.item_description,
+      status: r.status,
+    })),
+    hasPaymentMethod: context.hasPaymentMethod,
+    provider: context.provider,
+    shippingCatalog: context.shippingCatalog,
+    language: context.language,
+  };
 }
 
-/**
- * Procesa un mensaje del usuario y devuelve texto o una llamada a función.
- */
 export async function processMessageWithAI(
   userMessage: string,
   context: AIContext,
-  history: Content[] = [],
+  history: ChatTurn[] = [],
 ): Promise<AIResponse> {
   try {
-    const model = genAI.getGenerativeModel({
-      model: config.gemini.model,
-      systemInstruction: buildSystemPrompt(context),
-      tools: [{functionDeclarations}],
-    });
-
-    const chat = model.startChat({
-      history,
-      generationConfig: {temperature: 0.4, maxOutputTokens: 1024},
-    });
-
-    const result = await chat.sendMessage(userMessage);
-    const [call] = result.response.functionCalls() || [];
-
-    if (call) {
-      return {text: '', functionCall: {name: call.name, args: (call.args as Record<string, any>) || {}}};
-    }
-    return {text: result.response.text()};
+    return await askAgent({message: userMessage, history, context: minimalContext(context)});
   } catch (error: any) {
-    console.error('Error processing message with Gemini:', error?.message);
+    console.error('Error processing message with Reapli:', error?.message);
     return {text: translate(context.language, 'chat.connectionError')};
   }
 }

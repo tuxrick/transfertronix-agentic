@@ -19,6 +19,10 @@ const config = {
     token: process.env.KWAL_TOKEN || '',
     explorerUrl: process.env.KWAL_EXPLORER_URL || 'https://explorer-sepolia.inkonchain.com',
   },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY || '',
+    model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+  },
   supabase: {
     url: process.env.SUPABASE_URL || '',
     anonKey: process.env.SUPABASE_ANON_KEY || '',

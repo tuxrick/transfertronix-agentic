@@ -25,13 +25,13 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function request<T>(method: string, path: string, body?: unknown, base = '/api/commerce'): Promise<T> {
   const {
     data: {session},
   } = await supabase.auth.getSession();
   if (!session) throw new ApiError(401, 'UNAUTHENTICATED', 'Inicia sesión de nuevo');
 
-  const response = await fetch(`${getBackendUrl()}/api/commerce${path}`, {
+  const response = await fetch(`${getBackendUrl()}${base}${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${session.access_token}`,
@@ -97,3 +97,7 @@ export const createCheckout = (input: {
   request<Checkout>('POST', '/checkouts', input);
 
 export const getCheckout = (id: string) => request<Checkout>('GET', `/checkouts/${id}`);
+
+// Reapli (agente) corre en el backend
+export const askAgent = (input: {message: string; history: unknown[]; context: unknown}) =>
+  request<{text: string; functionCall?: {name: string; args: Record<string, any>}}>('POST', '/message', input, '/api/agent');
