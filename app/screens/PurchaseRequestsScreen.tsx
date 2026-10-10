@@ -14,28 +14,25 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../types/navigation';
 import type {PurchaseRequest, PurchaseRequestStatus} from '../types/purchaseRequest';
 import {cancelPurchaseRequest, getPurchaseRequests, syncCheckout} from '../lib/purchaseRequests';
+import {useI18n} from '../lib/i18n';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PurchaseRequests'>;
 
-const STATUS_STYLES: Record<PurchaseRequestStatus, {label: string; color: string}> = {
-  pending: {label: 'Pendiente', color: '#f59e0b'},
-  quoted: {label: 'Cotizada', color: '#3b82f6'},
-  awaiting_approval: {label: 'Por aprobar', color: '#a855f7'},
-  completed: {label: 'Comprada', color: '#22c55e'},
-  failed: {label: 'Falló', color: '#ef4444'},
-  expired: {label: 'Expiró', color: '#64748b'},
-  cancelled: {label: 'Cancelada', color: '#64748b'},
+const STATUS_COLORS: Record<PurchaseRequestStatus, string> = {
+  pending: '#f59e0b',
+  quoted: '#3b82f6',
+  awaiting_approval: '#a855f7',
+  completed: '#22c55e',
+  failed: '#ef4444',
+  expired: '#64748b',
+  cancelled: '#64748b',
 };
 
 const CANCELLABLE: PurchaseRequestStatus[] = ['pending', 'quoted'];
 
 type Tab = 'open' | 'completed' | 'all';
 
-const TABS: {key: Tab; label: string}[] = [
-  {key: 'open', label: 'Abiertas'},
-  {key: 'completed', label: 'Compradas'},
-  {key: 'all', label: 'Todas'},
-];
+const TABS: Tab[] = ['open', 'completed', 'all'];
 
 const TAB_FILTERS: Record<Tab, (r: PurchaseRequest) => boolean> = {
   open: r => ['pending', 'quoted', 'awaiting_approval'].includes(r.status),
@@ -43,12 +40,13 @@ const TAB_FILTERS: Record<Tab, (r: PurchaseRequest) => boolean> = {
   all: () => true,
 };
 
-function formatDate(value?: string) {
+function formatDate(value: string | undefined, locale: string) {
   if (!value) return '';
-  return new Date(value).toLocaleString('es-MX', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'});
+  return new Date(value).toLocaleString(locale, {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'});
 }
 
 export default function PurchaseRequestsScreen({navigation}: Props) {
+  const {t, locale} = useI18n();
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<Tab>('open');
@@ -78,17 +76,17 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
   };
 
   const handleCancel = (request: PurchaseRequest) => {
-    Alert.alert('Cancelar solicitud', `¿Cancelar "${request.item_description}"?`, [
-      {text: 'No', style: 'cancel'},
+    Alert.alert(t('requests.cancelTitle'), t('requests.cancelConfirm', {item: request.item_description}), [
+      {text: t('requests.no'), style: 'cancel'},
       {
-        text: 'Sí, cancelar',
+        text: t('requests.yesCancel'),
         style: 'destructive',
         onPress: async () => {
           try {
             await cancelPurchaseRequest(request.id);
             await loadRequests();
           } catch (error: any) {
-            Alert.alert('Error', error.message);
+            Alert.alert(t('common.error'), error.message);
           }
         },
       },
@@ -100,12 +98,12 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
       await syncCheckout(request);
       await loadRequests();
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     }
   };
 
   const renderRequest = ({item}: {item: PurchaseRequest}) => {
-    const status = STATUS_STYLES[item.status];
+    const status = {label: t(`requests.status.${item.status}`), color: STATUS_COLORS[item.status]};
     const amount = item.final_amount ?? item.quoted_amount ?? item.max_amount;
 
     return (
@@ -113,9 +111,9 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
         <View style={styles.requestHeader}>
           <View style={styles.requestHeaderLeft}>
             <Text style={styles.requestAmount}>
-              {amount ? `${Number(amount).toFixed(2)} ${item.currency}` : 'Sin cotizar'}
+              {amount ? `${Number(amount).toFixed(2)} ${item.currency}` : t('requests.notQuoted')}
             </Text>
-            <Text style={styles.requestContact}>👤 {item.contact_name || 'Para mí'}</Text>
+            <Text style={styles.requestContact}>👤 {item.contact_name || t('requests.forMe')}</Text>
           </View>
           <View style={[styles.statusBadge, {backgroundColor: status.color}]}>
             <Text style={styles.statusText}>{status.label}</Text>
@@ -126,7 +124,7 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
 
         {item.product_snapshot?.name && (
           <View style={styles.requestDetails}>
-            <Text style={styles.requestDetailLabel}>Producto</Text>
+            <Text style={styles.requestDetailLabel}>{t('requests.product')}</Text>
             <Text style={styles.requestDetailValue}>
               {item.product_snapshot.name} · {item.product_snapshot.merchant}
             </Text>
@@ -134,20 +132,20 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
         )}
         {item.order_id && (
           <View style={styles.requestDetails}>
-            <Text style={styles.requestDetailLabel}>Orden</Text>
+            <Text style={styles.requestDetailLabel}>{t('requests.order')}</Text>
             <Text style={styles.requestDetailValue}>
               {item.order_id}
-              {item.product_snapshot?.demo ? ' (simulada)' : ''}
+              {item.product_snapshot?.demo ? t('requests.simulated') : ''}
             </Text>
           </View>
         )}
         <View style={styles.requestDetails}>
-          <Text style={styles.requestDetailLabel}>{item.status === 'completed' ? 'Comprada' : 'Solicitada'}</Text>
-          <Text style={styles.requestDetailValue}>{formatDate(item.completed_at || item.created_at)}</Text>
+          <Text style={styles.requestDetailLabel}>{item.status === 'completed' ? t('requests.purchasedAt') : t('requests.requestedAt')}</Text>
+          <Text style={styles.requestDetailValue}>{formatDate(item.completed_at || item.created_at, locale)}</Text>
         </View>
         {item.max_amount && item.status !== 'completed' && (
           <View style={styles.requestDetails}>
-            <Text style={styles.requestDetailLabel}>Tope</Text>
+            <Text style={styles.requestDetailLabel}>{t('requests.cap')}</Text>
             <Text style={styles.requestDetailValue}>
               {Number(item.max_amount).toFixed(2)} {item.currency}
             </Text>
@@ -157,17 +155,17 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
         <View style={styles.actionsRow}>
           {CANCELLABLE.includes(item.status) && (
             <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={() => handleCancel(item)}>
-              <Text style={styles.actionButtonText}>Cancelar</Text>
+              <Text style={styles.actionButtonText}>{t('requests.cancel')}</Text>
             </TouchableOpacity>
           )}
           {item.status === 'awaiting_approval' && (
             <TouchableOpacity style={[styles.actionButton, styles.shareButton]} onPress={() => handleSync(item)}>
-              <Text style={styles.actionButtonText}>Actualizar estado</Text>
+              <Text style={styles.actionButtonText}>{t('requests.refresh')}</Text>
             </TouchableOpacity>
           )}
           {CANCELLABLE.includes(item.status) && (
             <TouchableOpacity style={[styles.actionButton, styles.payButton]} onPress={() => navigation.navigate('Chat')}>
-              <Text style={styles.actionButtonText}>Atender en el chat</Text>
+              <Text style={styles.actionButtonText}>{t('requests.handleInChat')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -181,24 +179,24 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Historial de compras</Text>
+        <Text style={styles.headerTitle}>{t('requests.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.tabs}>
-        {TABS.map(t => (
+        {TABS.map(key => (
           <TouchableOpacity
-            key={t.key}
-            style={[styles.tab, tab === t.key && styles.tabActive]}
-            onPress={() => setTab(t.key)}>
-            <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>
-              {t.label} ({requests.filter(TAB_FILTERS[t.key]).length})
+            key={key}
+            style={[styles.tab, tab === key && styles.tabActive]}
+            onPress={() => setTab(key)}>
+            <Text style={[styles.tabText, tab === key && styles.tabTextActive]}>
+              {t(`requests.tabs.${key}`)} ({requests.filter(TAB_FILTERS[key]).length})
             </Text>
           </TouchableOpacity>
         ))}
       </View>
       {tab === 'completed' && totalSpent > 0 && (
-        <Text style={styles.totalSpent}>Total comprado: {totalSpent.toFixed(2)} USD</Text>
+        <Text style={styles.totalSpent}>{t('requests.totalSpent', {amount: totalSpent.toFixed(2)})}</Text>
       )}
 
       <FlatList
@@ -210,9 +208,9 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🛒</Text>
-            <Text style={styles.emptyTitle}>{tab === 'completed' ? 'Aún no hay compras' : 'Sin solicitudes'}</Text>
+            <Text style={styles.emptyTitle}>{tab === 'completed' ? t('requests.emptyPurchases') : t('requests.emptyTitle')}</Text>
             <Text style={styles.emptySubtitle}>
-              Pídele algo a Reapli en el chat, por ejemplo: "Mándale café a papá"
+              {t('requests.emptyBody')}
             </Text>
           </View>
         }

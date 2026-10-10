@@ -5,6 +5,7 @@
 
 import {getBackendUrl} from '../config';
 import {supabase} from './supabase';
+import {getLanguage} from './i18n';
 import type {
   Checkout,
   ExternalCheckout,
@@ -35,6 +36,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     headers: {
       Authorization: `Bearer ${session.access_token}`,
       'Content-Type': 'application/json',
+      'Accept-Language': getLanguage(),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });

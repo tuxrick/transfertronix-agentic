@@ -128,6 +128,11 @@
     .flow i { color: var(--ok); font-style: normal; }
     .flow u { color: var(--danger); text-decoration: none; }
 
+    /* Language toggle */
+    .lang { display: flex; gap: 2px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+    .lang button { background: none; border: 0; color: var(--muted); font: 600 13px Inter, sans-serif; padding: 6px 12px; border-radius: 7px; cursor: pointer; }
+    .lang button.active { background: var(--accent); color: #fff; }
+
     /* Demo */
     .demo { display: grid; grid-template-columns: 1fr 380px; gap: 56px; align-items: center; }
     .demo-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-bottom: 28px; }
@@ -168,31 +173,37 @@
     <div class="wrap">
       <a href="#" class="logo">⚡ <b>Transfer<span>tronix</span></b></a>
       <ul>
-        <li><a href="#demo">Demo</a></li>
-        <li><a href="#descargar">Descargar</a></li>
-        <li><a href="#como-funciona">Cómo funciona</a></li>
-        <li><a href="#control">Control de gasto</a></li>
-        <li><a href="#casos">Casos de uso</a></li>
-        <li><a href="#app">La app</a></li>
-        <li><a href="#tecnologia">Tecnología</a></li>
+        <li><a href="#demo" data-i18n="nav.demo">Demo</a></li>
+        <li><a href="#descargar" data-i18n="nav.download">Descargar</a></li>
+        <li><a href="#como-funciona" data-i18n="nav.how">Cómo funciona</a></li>
+        <li><a href="#control" data-i18n="nav.control">Control de gasto</a></li>
+        <li><a href="#casos" data-i18n="nav.cases">Casos de uso</a></li>
+        <li><a href="#app" data-i18n="nav.app">La app</a></li>
+        <li><a href="#tecnologia" data-i18n="nav.tech">Tecnología</a></li>
+        <li><a href="#acceso" data-i18n="nav.access">Acceso</a></li>
       </ul>
+      <div class="lang" role="group" aria-label="Idioma / Language">
+        <button type="button" data-lang="es">ES</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
     </div>
   </nav>
 
   <header class="hero">
     <div class="wrap">
       <div>
-        <div class="badge">🤖 Conoce a Reapli · Agentic Hackathon · Reap × AI Builders MX</div>
-        <h1>Reapli compra por tu equipo <em>sin salirse del presupuesto</em></h1>
-        <p class="lead">Reapli es el agente de compras de Transfertronix. Pídele en lenguaje natural lo que alguien necesita: busca en comercios compatibles, cotiza con envío real y paga con Reap Agentic Payments, siempre dentro del tope que definiste y sin tocar nunca tu tarjeta.</p>
+        <div class="badge" data-i18n="hero.badge">🤖 Conoce a Reapli · Agentic Hackathon · Reap × AI Builders MX</div>
+        <h1 data-i18n="hero.title">Reapli compra por tu equipo <em>sin salirse del presupuesto</em></h1>
+        <p class="lead" data-i18n="hero.lead">Reapli es el agente de compras de Transfertronix. Pídele en lenguaje natural lo que alguien necesita: busca en comercios compatibles, cotiza con envío real y paga con Reap Agentic Payments, siempre dentro del tope que definiste y sin tocar nunca tu tarjeta.</p>
         <div class="cta">
-          <a class="btn btn-primary" href="#demo">▶ Ver la demo</a>
-          <a class="btn btn-ghost" href="#descargar">⬇ Descargar para Android</a>
+          <a class="btn btn-primary" href="#demo" data-i18n="hero.ctaDemo">▶ Ver la demo</a>
+          <a class="btn btn-ghost" href="#descargar" data-i18n="hero.ctaDownload">⬇ Descargar para Android</a>
         </div>
         <div class="hero-stats">
-          <div><strong>152</strong>comercios compatibles</div>
-          <div><strong>100%</strong>topes validados en servidor</div>
-          <div><strong>0</strong>datos de tarjeta en el LLM</div>
+          <div data-i18n="hero.stat1"><strong>152</strong>comercios compatibles</div>
+          <div data-i18n="hero.stat2"><strong>100%</strong>topes validados en servidor</div>
+          <div data-i18n="hero.stat3"><strong>0</strong>datos de tarjeta en el LLM</div>
+          <div data-i18n="hero.stat4"><strong>0</strong>contraseñas: solo tu correo</div>
         </div>
       </div>
       <div class="phone"><img src="img/chat.jpg" alt="Chat de Transfertronix con ejemplos de solicitudes de compra"></div>
@@ -202,18 +213,18 @@
   <section id="demo">
     <div class="wrap demo">
       <div>
-        <div class="eyebrow">Demo</div>
-        <h2>Reapli en acción, de punta a punta</h2>
-        <p class="section-lead">Grabado en un iPhone real contra el sandbox de Reap: contactos con tope, tarjeta registrada en Reap con passkey de Visa, compras con cotización real y el servidor bloqueando lo que excede el presupuesto.</p>
+        <div class="eyebrow" data-i18n="demo.eyebrow">Demo</div>
+        <h2 data-i18n="demo.title">Reapli en acción, de punta a punta</h2>
+        <p class="section-lead" data-i18n="demo.lead">Grabado en un iPhone real contra el sandbox de Reap: contactos con tope, tarjeta registrada en Reap con passkey de Visa, compras con cotización real y el servidor bloqueando lo que excede el presupuesto.</p>
         <ul class="demo-list">
-          <li><span>1</span>Contactos con dirección y tope</li>
-          <li><span>2</span>Tarjeta segura en Reap</li>
-          <li><span>3</span>Compra aprobada con passkey</li>
-          <li><span>4</span>El tope bloquea la compra</li>
-          <li><span>5</span>Solicitudes del equipo</li>
-          <li><span>6</span>Historial y trazabilidad</li>
+          <li data-i18n="demo.s1"><span>1</span>Contactos con dirección y tope</li>
+          <li data-i18n="demo.s2"><span>2</span>Tarjeta segura en Reap</li>
+          <li data-i18n="demo.s3"><span>3</span>Compra aprobada con passkey</li>
+          <li data-i18n="demo.s4"><span>4</span>El tope bloquea la compra</li>
+          <li data-i18n="demo.s5"><span>5</span>Solicitudes del equipo</li>
+          <li data-i18n="demo.s6"><span>6</span>Historial y trazabilidad</li>
         </ul>
-        <a class="btn btn-ghost" href="/demo" target="_blank" rel="noopener">Abrir el video en pantalla completa ↗</a>
+        <a class="btn btn-ghost" href="/demo" target="_blank" rel="noopener" data-i18n="demo.open">Abrir el video en pantalla completa ↗</a>
       </div>
       <div class="video-frame">
         <video controls playsinline preload="metadata" poster="video/poster.jpg">
@@ -225,27 +236,27 @@
 
   <section class="alt">
     <div class="wrap">
-      <div class="eyebrow">El problema</div>
-      <h2>Darle una tarjeta a una IA da miedo. Comprar a mano, también.</h2>
-      <p class="section-lead">Hoy las compras pequeñas de un equipo o una familia viven entre WhatsApp, tarjetas personales y hojas de cálculo. Y los agentes de compra que existen solo buscan y compran, sin ningún control.</p>
+      <div class="eyebrow" data-i18n="problem.eyebrow">El problema</div>
+      <h2 data-i18n="problem.title">Darle una tarjeta a una IA da miedo. Comprar a mano, también.</h2>
+      <p class="section-lead" data-i18n="problem.lead">Hoy las compras pequeñas de un equipo o una familia viven entre WhatsApp, tarjetas personales y hojas de cálculo. Y los agentes de compra que existen solo buscan y compran, sin ningún control.</p>
       <div class="problem">
-        <div class="pain"><div class="icon">💬</div><h3>Pedidos dispersos</h3><p>"¿Me compras un teclado?" llega por chat, alguien lo busca, otro paga y nadie sabe qué se aprobó.</p></div>
-        <div class="pain"><div class="icon">💳</div><h3>Riesgo con la tarjeta</h3><p>Compartir la tarjeta o dársela a un bot expone el número y no limita cuánto ni dónde se gasta.</p></div>
-        <div class="pain"><div class="icon">📉</div><h3>Cero conciliación</h3><p>Sin un registro de la solicitud a la orden, el gasto se descontrola y nadie puede auditarlo.</p></div>
+        <div class="pain" data-i18n="problem.p1"><div class="icon">💬</div><h3>Pedidos dispersos</h3><p>"¿Me compras un teclado?" llega por chat, alguien lo busca, otro paga y nadie sabe qué se aprobó.</p></div>
+        <div class="pain" data-i18n="problem.p2"><div class="icon">💳</div><h3>Riesgo con la tarjeta</h3><p>Compartir la tarjeta o dársela a un bot expone el número y no limita cuánto ni dónde se gasta.</p></div>
+        <div class="pain" data-i18n="problem.p3"><div class="icon">📉</div><h3>Cero conciliación</h3><p>Sin un registro de la solicitud a la orden, el gasto se descontrola y nadie puede auditarlo.</p></div>
       </div>
     </div>
   </section>
 
   <section id="como-funciona">
     <div class="wrap">
-      <div class="eyebrow">Cómo funciona</div>
-      <h2>De "necesito esto" a la orden, en un chat</h2>
-      <p class="section-lead">Reapli entiende la petición, y el backend se encarga de que cada paso sea seguro y respete el presupuesto.</p>
+      <div class="eyebrow" data-i18n="how.eyebrow">Cómo funciona</div>
+      <h2 data-i18n="how.title">De "necesito esto" a la orden, en un chat</h2>
+      <p class="section-lead" data-i18n="how.lead">Reapli entiende la petición, y el backend se encarga de que cada paso sea seguro y respete el presupuesto.</p>
       <div class="steps">
-        <div class="step"><h3>Pides en lenguaje natural</h3><p>"Ana necesita un teclado inalámbrico, máximo 80 dólares". Gemini 3.8 entiende quién, qué y el tope con <code>function calling</code>.</p></div>
-        <div class="step"><h3>Busca en comercios compatibles</h3><p>Reap busca en catálogos reales y solo ofrece comercios que envían al país del contacto.</p></div>
-        <div class="step"><h3>Cotiza con envío real</h3><p>La cotización usa la dirección del contacto: subtotal, envío, impuestos y total antes de pagar.</p></div>
-        <div class="step"><h3>Tú apruebas, el tope manda</h3><p>El backend vuelve a leer la cotización y rechaza el cargo si pasa el tope. Apruebas en la página segura de Reap y queda la orden.</p></div>
+        <div class="step" data-i18n="how.s1"><h3>Pides en lenguaje natural</h3><p>"Ana necesita un teclado inalámbrico, máximo 80 dólares". Gemini 3.8 entiende quién, qué y el tope con <code>function calling</code>.</p></div>
+        <div class="step" data-i18n="how.s2"><h3>Busca en comercios compatibles</h3><p>Reap busca en catálogos reales y solo ofrece comercios que envían al país del contacto.</p></div>
+        <div class="step" data-i18n="how.s3"><h3>Cotiza con envío real</h3><p>La cotización usa la dirección del contacto: subtotal, envío, impuestos y total antes de pagar.</p></div>
+        <div class="step" data-i18n="how.s4"><h3>Tú apruebas, el tope manda</h3><p>El backend vuelve a leer la cotización y rechaza el cargo si pasa el tope. Apruebas en la página segura de Reap y queda la orden.</p></div>
       </div>
     </div>
   </section>
@@ -253,46 +264,46 @@
   <section class="alt" id="control">
     <div class="wrap guard">
       <div>
-        <div class="eyebrow">Control de gasto</div>
-        <h2>Reapli no es un chatbot que compra. Es un agente con reglas.</h2>
-        <p class="section-lead">La IA propone; las reglas se validan en el servidor, donde el modelo no las puede saltar.</p>
+        <div class="eyebrow" data-i18n="control.eyebrow">Control de gasto</div>
+        <h2 data-i18n="control.title">Reapli no es un chatbot que compra. Es un agente con reglas.</h2>
+        <p class="section-lead" data-i18n="control.lead">La IA propone; las reglas se validan en el servidor, donde el modelo no las puede saltar.</p>
         <ul class="checks">
-          <li><div class="dot">✓</div><div><strong>Tope por persona, validado en servidor</strong><span>Se compara contra el total vivo de la cotización, no contra lo que diga el cliente o el LLM.</span></div></li>
-          <li><div class="dot">✓</div><div><strong>Misma moneda o no se cobra</strong><span>Si el tope está en MXN y la cotización en USD, el cargo se bloquea.</span></div></li>
-          <li><div class="dot">✓</div><div><strong>Solo comercios compatibles</strong><span>Cualquier carrito fuera de la lista de comercios soportados se rechaza.</span></div></li>
-          <li><div class="dot">✓</div><div><strong>La tarjeta nunca toca a Reapli</strong><span>Se registra una vez en la página de Reap; Reapli solo ve red y últimos 4 dígitos.</span></div></li>
+          <li data-i18n="control.c1"><div class="dot">✓</div><div><strong>Tope por persona, validado en servidor</strong><span>Se compara contra el total vivo de la cotización, no contra lo que diga el cliente o el LLM.</span></div></li>
+          <li data-i18n="control.c2"><div class="dot">✓</div><div><strong>Misma moneda o no se cobra</strong><span>Si el tope está en MXN y la cotización en USD, el cargo se bloquea.</span></div></li>
+          <li data-i18n="control.c3"><div class="dot">✓</div><div><strong>Solo comercios compatibles</strong><span>Cualquier carrito fuera de la lista de comercios soportados se rechaza.</span></div></li>
+          <li data-i18n="control.c4"><div class="dot">✓</div><div><strong>La tarjeta nunca toca a Reapli</strong><span>Se registra una vez en la página de Reap; Reapli solo ve red y últimos 4 dígitos.</span></div></li>
         </ul>
       </div>
       <div class="chat-demo" aria-label="Ejemplo de conversación">
-        <div class="msg user">Ana necesita un teclado inalámbrico, máximo 80 dólares</div>
-        <div class="msg ai">Encontré opciones en comercios compatibles:<br>1. AJAZZ AK820 Pro · EPOMAKER · 68.99 USD<br>2. EPOMAKER x AULA F75 · 79.99 USD<span class="tag ok">Dentro del tope · 80 USD</span></div>
-        <div class="msg user">Mándale un teclado a papá</div>
-        <div class="msg ai block">🛑 El total (68.99 USD) excede el tope autorizado para papá (25 USD). Busca otra opción o sube el tope.<span class="tag no">Bloqueado por el servidor</span></div>
+        <div class="msg user" data-i18n="control.m1">Ana necesita un teclado inalámbrico, máximo 80 dólares</div>
+        <div class="msg ai" data-i18n="control.m2">Encontré opciones en comercios compatibles:<br>1. AJAZZ AK820 Pro · EPOMAKER · 68.99 USD<br>2. EPOMAKER x AULA F75 · 79.99 USD<span class="tag ok">Dentro del tope · 80 USD</span></div>
+        <div class="msg user" data-i18n="control.m3">Mándale un teclado a papá</div>
+        <div class="msg ai block" data-i18n="control.m4">🛑 El total (68.99 USD) excede el tope autorizado para papá (25 USD). Busca otra opción o sube el tope.<span class="tag no">Bloqueado por el servidor</span></div>
       </div>
     </div>
   </section>
 
   <section id="casos">
     <div class="wrap">
-      <div class="eyebrow">Casos de uso</div>
-      <h2>Un mismo flujo, tres mundos</h2>
-      <p class="section-lead">Solicitud, cotización, aprobación y orden: lo único que cambia es quién pide y quién aprueba.</p>
+      <div class="eyebrow" data-i18n="cases.eyebrow">Casos de uso</div>
+      <h2 data-i18n="cases.title">Un mismo flujo, tres mundos</h2>
+      <p class="section-lead" data-i18n="cases.lead">Solicitud, cotización, aprobación y orden: lo único que cambia es quién pide y quién aprueba.</p>
       <div class="cases">
-        <div class="case">
+        <div class="case" data-i18n="cases.c1">
           <div class="icon">🏢</div>
           <h3>Gasto de equipo</h3>
           <div class="who">Startups y equipos remotos</div>
           <p>Cada persona tiene un tope. Reapli cotiza teclados, hubs USB-C, monitores o artículos de oficina y el responsable aprueba. Todo queda trazado para conciliar.</p>
           <blockquote>"El equipo de diseño necesita dos hubs USB-C, tope 60 USD cada uno"</blockquote>
         </div>
-        <div class="case">
+        <div class="case" data-i18n="cases.c2">
           <div class="icon">🏡</div>
           <h3>Vida diaria y regalos</h3>
           <div class="who">Familias, también a distancia</div>
           <p>Compra para quien te importa con su dirección y un tope por persona: café de especialidad, libros o cosas para la casa, enviados directo.</p>
           <blockquote>"Mándale café de especialidad a mi papá, máximo 25 dólares"</blockquote>
         </div>
-        <div class="case">
+        <div class="case" data-i18n="cases.c3">
           <div class="icon">🔗</div>
           <h3>Tesorería en stablecoins</h3>
           <div class="who">Equipos con fondos en USDC</div>
@@ -305,32 +316,32 @@
 
   <section class="alt" id="app">
     <div class="wrap">
-      <div class="eyebrow">La app</div>
-      <h2>Hecha para usarse en el momento</h2>
-      <p class="section-lead">App móvil en React Native: inicias sesión con un código por correo, das de alta a tus personas una vez y luego todo pasa en el chat.</p>
+      <div class="eyebrow" data-i18n="app.eyebrow">La app</div>
+      <h2 data-i18n="app.title">Hecha para usarse en el momento</h2>
+      <p class="section-lead" data-i18n="app.lead">App móvil en React Native, en español e inglés: te registras solo con tu correo, das de alta a tus personas una vez y luego todo pasa en el chat. Reapli cambia de idioma si se lo pides.</p>
       <div class="screens">
-        <div class="screen"><div class="phone"><img src="img/chat.jpg" alt="Pantalla de chat"></div><h3>Chat con Reapli</h3><p>Pides en lenguaje natural; las opciones aparecen como botones y cada compra se confirma con su desglose.</p></div>
-        <div class="screen"><div class="phone"><img src="img/contacts.jpg" alt="Lista de contactos con ciudad y tope"></div><h3>Cada persona con su tope</h3><p>Ciudad de envío, tope por compra y un nickname para pedirle a Reapli "mándale café a papá".</p></div>
-        <div class="screen"><div class="phone"><img src="img/requests.jpg" alt="Solicitudes de compra"></div><h3>Solicitudes trazables</h3><p>Lo que piden tus personas queda registrado con su tope y estado, de pendiente a comprada.</p></div>
-        <div class="screen"><div class="phone"><img src="img/contact.jpg" alt="Formulario de contacto"></div><h3>Alta en un minuto</h3><p>Dirección de envío y presupuesto por persona; Reapli los usa para cotizar y cobrar.</p></div>
+        <div class="screen"><div class="phone"><img src="img/chat.jpg" alt="Pantalla de chat"></div><h3 data-i18n="app.s1.title">Chat con Reapli</h3><p data-i18n="app.s1.desc">Pides en lenguaje natural; las opciones aparecen como botones y cada compra se confirma con su desglose.</p></div>
+        <div class="screen"><div class="phone"><img src="img/contacts.jpg" alt="Lista de contactos con ciudad y tope"></div><h3 data-i18n="app.s2.title">Cada persona con su tope</h3><p data-i18n="app.s2.desc">Ciudad de envío, tope por compra y un nickname para pedirle a Reapli "mándale café a papá".</p></div>
+        <div class="screen"><div class="phone"><img src="img/requests.jpg" alt="Solicitudes de compra"></div><h3 data-i18n="app.s3.title">Solicitudes trazables</h3><p data-i18n="app.s3.desc">Lo que piden tus personas queda registrado con su tope y estado, de pendiente a comprada.</p></div>
+        <div class="screen"><div class="phone"><img src="img/contact.jpg" alt="Formulario de contacto"></div><h3 data-i18n="app.s4.title">Alta en un minuto</h3><p data-i18n="app.s4.desc">Dirección de envío y presupuesto por persona; Reapli los usa para cotizar y cobrar.</p></div>
       </div>
     </div>
   </section>
 
   <section id="tecnologia">
     <div class="wrap">
-      <div class="eyebrow">Tecnología</div>
-      <h2>Cómo está construido</h2>
-      <p class="section-lead">Las llaves viven solo en el backend. La app habla con un contrato de comercio normalizado que funciona igual con Reap o con Kwal.</p>
+      <div class="eyebrow" data-i18n="tech.eyebrow">Tecnología</div>
+      <h2 data-i18n="tech.title">Cómo está construido</h2>
+      <p class="section-lead" data-i18n="tech.lead">Las llaves viven solo en el backend. La app habla con un contrato de comercio normalizado que funciona igual con Reap o con Kwal.</p>
       <div class="stack">
-        <div class="tech"><h3>💳 Reap Agentic Payments</h3><p>Enrollments, búsqueda de productos, cotizaciones y checkout con aprobación en página hospedada.</p></div>
-        <div class="tech"><h3>🔗 Kwal de Payward</h3><p>Adaptador alterno: tarjeta respaldada por una bóveda USDC en Ink Sepolia, intercambiable con una variable.</p></div>
-        <div class="tech"><h3>🧠 Gemini 3.8 Flash</h3><p>El cerebro de Reapli: function calling nativo con herramientas para crear, atender y listar solicitudes de compra.</p></div>
-        <div class="tech"><h3>📱 React Native</h3><p>App iOS en TypeScript con chat, contactos, métodos de pago e historial de solicitudes.</p></div>
-        <div class="tech"><h3>⚙️ Node + Express en Vercel</h3><p>Proxy seguro: valida la sesión, aplica topes y la lista de comercios, y redirige el retorno de Reap a la app.</p></div>
-        <div class="tech"><h3>🗄️ Supabase</h3><p>Auth por código de correo y Postgres con RLS para contactos y solicitudes de compra.</p></div>
+        <div class="tech" data-i18n="tech.t1"><h3>💳 Reap Agentic Payments</h3><p>Enrollments, búsqueda de productos, cotizaciones y checkout con aprobación en página hospedada.</p></div>
+        <div class="tech" data-i18n="tech.t2"><h3>🔗 Kwal de Payward</h3><p>Adaptador alterno: tarjeta respaldada por una bóveda USDC en Ink Sepolia, intercambiable con una variable.</p></div>
+        <div class="tech" data-i18n="tech.t3"><h3>🧠 Gemini 3.8 Flash</h3><p>El cerebro de Reapli: function calling nativo con herramientas para crear, atender y listar solicitudes de compra.</p></div>
+        <div class="tech" data-i18n="tech.t4"><h3>📱 React Native</h3><p>App iOS y Android en TypeScript, bilingüe, con chat, contactos, métodos de pago e historial de solicitudes.</p></div>
+        <div class="tech" data-i18n="tech.t5"><h3>⚙️ Node + Express en Vercel</h3><p>Proxy seguro: valida la sesión, aplica topes y la lista de comercios, y redirige el retorno de Reap a la app.</p></div>
+        <div class="tech" data-i18n="tech.t6"><h3>🗄️ Supabase</h3><p>Auth passwordless por código de correo y Postgres con RLS para contactos, solicitudes y conversaciones.</p></div>
       </div>
-      <div class="flow"><b>Chat</b> ──► Reapli (Gemini) <i>create_purchase_request</i>
+      <div class="flow" data-i18n="tech.flow"><b>Chat</b> ──► Reapli (Gemini) <i>create_purchase_request</i>
   └─► Supabase  purchase_requests  <i>pending</i>
        └─► <b>/products/search</b>  Reap · solo comercios que envían al país del contacto
             └─► <b>/quotes</b>  total con envío a la dirección del contacto  <i>quoted</i>
@@ -340,29 +351,78 @@
     </div>
   </section>
 
+  <section id="acceso">
+    <div class="wrap guard">
+      <div>
+        <div class="eyebrow" data-i18n="access.eyebrow">Acceso sin contraseñas</div>
+        <h2 data-i18n="access.title">Cualquiera puede registrarse, solo con su correo</h2>
+        <p class="section-lead" data-i18n="access.lead">No hay formularios largos ni contraseñas. Escribes tu correo, te llega un código de 6 dígitos y listo: tu cuenta se crea en ese momento. Es passwordless, y por eso más seguro.</p>
+        <ul class="checks">
+          <li data-i18n="access.c1"><div class="dot">✓</div><div><strong>Nada que robar ni reutilizar</strong><span>Sin contraseñas no hay filtraciones de contraseñas, ni claves repetidas en otros sitios, ni ataques de fuerza bruta.</span></div></li>
+          <li data-i18n="access.c2"><div class="dot">✓</div><div><strong>Código de un solo uso</strong><span>Cada código sirve una sola vez y expira en 60 minutos; solo quien controla el correo puede entrar.</span></div></li>
+          <li data-i18n="access.c3"><div class="dot">✓</div><div><strong>Registro e inicio de sesión en un paso</strong><span>El mismo flujo crea la cuenta la primera vez y te deja entrar las siguientes.</span></div></li>
+          <li data-i18n="access.c4"><div class="dot">✓</div><div><strong>Tus datos, solo tuyos</strong><span>Supabase Auth con reglas por usuario: cada quien ve únicamente sus contactos, solicitudes y conversaciones.</span></div></li>
+        </ul>
+      </div>
+      <div class="chat-demo" aria-label="Flujo de registro">
+        <div class="msg ai" data-i18n="access.f1">📧 <strong>1.</strong> Escribe tu correo<span class="tag ok">tu@email.com</span></div>
+        <div class="msg ai" data-i18n="access.f2">🔢 <strong>2.</strong> Ingresa el código de 6 dígitos que te llega<span class="tag ok">• • • • • •</span></div>
+        <div class="msg ai" data-i18n="access.f3">✅ <strong>3.</strong> Listo: cuenta creada y sesión iniciada, sin contraseña</div>
+      </div>
+    </div>
+  </section>
+
   <section class="alt" id="descargar">
     <div class="wrap download">
       <div>
-        <div class="eyebrow">Pruébalo</div>
-        <h2>Descarga Transfertronix para Android</h2>
-        <p class="section-lead">Instala la app y habla con Reapli. Corre contra el sandbox de Reap: los pagos son simulados y no se mueve dinero real.</p>
-        <a class="btn btn-primary" href="/download/transfertronix.apk" download>⬇ Descargar APK</a>
-        <p class="download-meta">Versión 1.0 · 30 MB · Android 7.0 o superior</p>
+        <div class="eyebrow" data-i18n="download.eyebrow">Pruébalo</div>
+        <h2 data-i18n="download.title">Descarga Transfertronix para Android</h2>
+        <p class="section-lead" data-i18n="download.lead">Instala la app y habla con Reapli. Corre contra el sandbox de Reap: los pagos son simulados y no se mueve dinero real.</p>
+        <a class="btn btn-primary" href="/download/transfertronix.apk" download data-i18n="download.button">⬇ Descargar APK</a>
+        <p class="download-meta" data-i18n="download.meta">Versión 1.0 · 30 MB · Android 7.0 o superior</p>
       </div>
       <ol class="steps-install">
-        <li><strong>Descarga el APK</strong> desde tu teléfono Android.</li>
-        <li><strong>Permite la instalación</strong> cuando Android lo pida: "Instalar apps desconocidas" para tu navegador.</li>
-        <li><strong>Abre Transfertronix</strong> e inicia sesión con tu correo y el código de 6 dígitos.</li>
-        <li><strong>Registra una tarjeta de prueba</strong> en Métodos de pago (tarjetas de prueba del sandbox de Reap) y pídele algo a Reapli.</li>
+        <li data-i18n="download.s1"><strong>Descarga el APK</strong> desde tu teléfono Android.</li>
+        <li data-i18n="download.s2"><strong>Permite la instalación</strong> cuando Android lo pida: "Instalar apps desconocidas" para tu navegador.</li>
+        <li data-i18n="download.s3"><strong>Regístrate solo con tu correo:</strong> te llega un código de 6 dígitos. Sin contraseñas.</li>
+        <li data-i18n="download.s4"><strong>Registra una tarjeta de prueba</strong> en Métodos de pago (tarjetas de prueba del sandbox de Reap) y pídele algo a Reapli.</li>
       </ol>
     </div>
   </section>
 
   <footer>
     <div class="wrap">
-      <div>⚡ Transfertronix · Reapli · Agentic Hackathon 2026</div>
-      <div>Construido en el sandbox de Reap: los pagos son simulados y no se mueve dinero real.</div>
+      <div data-i18n="footer.left">⚡ Transfertronix · Reapli · Agentic Hackathon 2026</div>
+      <div data-i18n="footer.right">Construido en el sandbox de Reap: los pagos son simulados y no se mueve dinero real.</div>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var EN = {"nav.demo": "Demo", "nav.download": "Download", "nav.how": "How it works", "nav.control": "Spend control", "nav.cases": "Use cases", "nav.app": "The app", "nav.tech": "Technology", "nav.access": "Sign-in", "hero.badge": "🤖 Meet Reapli · Agentic Hackathon · Reap × AI Builders MX", "hero.title": "Reapli shops for your team <em>without breaking the budget</em>", "hero.lead": "Reapli is Transfertronix's shopping agent. Ask in plain language for what someone needs: it searches supported merchants, gets a real quote with shipping and pays with Reap Agentic Payments, always within the cap you set and without ever touching your card.", "hero.ctaDemo": "▶ Watch the demo", "hero.ctaDownload": "⬇ Download for Android", "hero.stat1": "<strong>152</strong>supported merchants", "hero.stat2": "<strong>100%</strong>caps enforced server-side", "hero.stat3": "<strong>0</strong>card data in the LLM", "hero.stat4": "<strong>0</strong>passwords: just your email", "demo.eyebrow": "Demo", "demo.title": "Reapli in action, end to end", "demo.lead": "Recorded on a real iPhone against Reap's sandbox: contacts with caps, a card enrolled in Reap with a Visa passkey, purchases with real quotes and the server blocking anything over budget.", "demo.s1": "<span>1</span>Contacts with address and cap", "demo.s2": "<span>2</span>Secure card in Reap", "demo.s3": "<span>3</span>Purchase approved with a passkey", "demo.s4": "<span>4</span>The cap blocks the purchase", "demo.s5": "<span>5</span>Team requests", "demo.s6": "<span>6</span>History and traceability", "demo.open": "Open the video full screen ↗", "problem.eyebrow": "The problem", "problem.title": "Handing an AI your card is scary. So is buying everything by hand.", "problem.lead": "Today a team's or a family's small purchases live across WhatsApp, personal cards and spreadsheets. And existing shopping agents just search and buy, with no control at all.", "problem.p1": "<div class=\"icon\">💬</div><h3>Scattered requests</h3><p>\"Can you buy me a keyboard?\" arrives by chat, someone looks for it, someone else pays and nobody knows what was approved.</p>", "problem.p2": "<div class=\"icon\">💳</div><h3>Card risk</h3><p>Sharing a card or giving it to a bot exposes the number and puts no limit on how much or where it is spent.</p>", "problem.p3": "<div class=\"icon\">📉</div><h3>Zero reconciliation</h3><p>Without a record from request to order, spending gets out of hand and nobody can audit it.</p>", "how.eyebrow": "How it works", "how.title": "From \"I need this\" to the order, in one chat", "how.lead": "Reapli understands the request, and the backend makes sure every step is safe and respects the budget.", "how.s1": "<h3>Ask in plain language</h3><p>\"Ana needs a wireless keyboard, max 80 dollars\". Gemini 3.8 understands who, what and the cap with <code>function calling</code>.</p>", "how.s2": "<h3>Searches supported merchants</h3><p>Reap searches real catalogs and only offers merchants that ship to the contact's country.</p>", "how.s3": "<h3>Quotes with real shipping</h3><p>The quote uses the contact's address: subtotal, shipping, taxes and total before paying.</p>", "how.s4": "<h3>You approve, the cap rules</h3><p>The backend re-reads the quote and rejects the charge if it exceeds the cap. You approve on Reap's secure page and the order is placed.</p>", "control.eyebrow": "Spend control", "control.title": "Reapli isn't a chatbot that buys. It's an agent with rules.", "control.lead": "The AI proposes; the rules are enforced on the server, where the model cannot bypass them.", "control.c1": "<div class=\"dot\">✓</div><div><strong>Per-person cap, enforced server-side</strong><span>Checked against the live quote total, not against what the client or the LLM says.</span></div>", "control.c2": "<div class=\"dot\">✓</div><div><strong>Same currency or no charge</strong><span>If the cap is in MXN and the quote is in USD, the charge is blocked.</span></div>", "control.c3": "<div class=\"dot\">✓</div><div><strong>Supported merchants only</strong><span>Any cart outside the supported merchant list is rejected.</span></div>", "control.c4": "<div class=\"dot\">✓</div><div><strong>The card never touches Reapli</strong><span>It's enrolled once on Reap's page; Reapli only sees the network and last 4 digits.</span></div>", "control.m1": "Ana needs a wireless keyboard, max 80 dollars", "control.m2": "I found options at supported merchants:<br>1. AJAZZ AK820 Pro · EPOMAKER · 68.99 USD<br>2. EPOMAKER x AULA F75 · 79.99 USD<span class=\"tag ok\">Within the cap · 80 USD</span>", "control.m3": "Send dad a keyboard", "control.m4": "🛑 The total (68.99 USD) exceeds dad's authorized cap (25 USD). Pick another option or raise the cap.<span class=\"tag no\">Blocked by the server</span>", "cases.eyebrow": "Use cases", "cases.title": "One flow, three worlds", "cases.lead": "Request, quote, approval and order: the only thing that changes is who asks and who approves.", "cases.c1": "\n          <div class=\"icon\">🏢</div>\n          <h3>Team spend</h3>\n          <div class=\"who\">Startups and remote teams</div>\n          <p>Everyone has a cap. Reapli quotes keyboards, USB-C hubs, monitors or office supplies and the owner approves. Everything is traceable for reconciliation.</p>\n          <blockquote>\"The design team needs two USB-C hubs, 60 USD cap each\"</blockquote>\n        ", "cases.c2": "\n          <div class=\"icon\">🏡</div>\n          <h3>Daily life and gifts</h3>\n          <div class=\"who\">Families, even far away</div>\n          <p>Buy for the people you care about with their address and a per-person cap: specialty coffee, books or things for the home, shipped directly.</p>\n          <blockquote>\"Send my dad some specialty coffee, max 25 dollars\"</blockquote>\n        ", "cases.c3": "\n          <div class=\"icon\">🔗</div>\n          <h3>Stablecoin treasury</h3>\n          <div class=\"who\">Teams holding USDC</div>\n          <p>With Kwal by Payward, Reapli pays with a card backed by a USDC vault on Ink Sepolia. Same agent, same caps, programmable funds.</p>\n          <blockquote>\"Pay the team's software license from the vault\"</blockquote>\n        ", "app.eyebrow": "The app", "app.title": "Built to be used in the moment", "app.lead": "React Native mobile app in Spanish and English: sign up with just your email, add your people once and then everything happens in the chat. Reapli switches language if you ask.", "app.s1.title": "Chat with Reapli", "app.s1.desc": "Ask in plain language; options show up as buttons and every purchase is confirmed with its breakdown.", "app.s2.title": "Everyone with their cap", "app.s2.desc": "Shipping city, per-purchase cap and a nickname to tell Reapli \"send dad some coffee\".", "app.s3.title": "Traceable requests", "app.s3.desc": "Your people's requests are recorded with their cap and status, from pending to purchased.", "app.s4.title": "Set up in a minute", "app.s4.desc": "Shipping address and budget per person; Reapli uses them to quote and charge.", "tech.eyebrow": "Technology", "tech.title": "How it is built", "tech.lead": "Keys live only in the backend. The app talks to a normalized commerce contract that works the same with Reap or Kwal.", "tech.t1": "<h3>💳 Reap Agentic Payments</h3><p>Enrollments, product search, quotes and checkout with approval on a hosted page.</p>", "tech.t2": "<h3>🔗 Kwal by Payward</h3><p>Alternate adapter: a card backed by a USDC vault on Ink Sepolia, switchable with one variable.</p>", "tech.t3": "<h3>🧠 Gemini 3.8 Flash</h3><p>Reapli's brain: native function calling with tools to create, handle and list purchase requests, and to switch language.</p>", "tech.t4": "<h3>📱 React Native</h3><p>Bilingual iOS and Android app in TypeScript with chat, contacts, payment methods and request history.</p>", "tech.t5": "<h3>⚙️ Node + Express on Vercel</h3><p>Secure proxy: validates the session, enforces caps and the merchant list, and redirects Reap's return to the app.</p>", "tech.t6": "<h3>🗄️ Supabase</h3><p>Passwordless email-code auth and Postgres with RLS for contacts, requests and conversations.</p>", "access.eyebrow": "Passwordless sign-in", "access.title": "Anyone can sign up, with just their email", "access.lead": "No long forms, no passwords. Type your email, get a 6-digit code and you're in: your account is created on the spot. It's passwordless, and that makes it safer.", "access.c1": "<div class=\"dot\">✓</div><div><strong>Nothing to steal or reuse</strong><span>No passwords means no password leaks, no reused passwords across sites and no brute-force attacks.</span></div>", "access.c2": "<div class=\"dot\">✓</div><div><strong>One-time code</strong><span>Each code works once and expires in 60 minutes; only whoever controls the inbox can get in.</span></div>", "access.c3": "<div class=\"dot\">✓</div><div><strong>Sign-up and sign-in in one step</strong><span>The same flow creates your account the first time and signs you in afterwards.</span></div>", "access.c4": "<div class=\"dot\">✓</div><div><strong>Your data stays yours</strong><span>Supabase Auth with per-user rules: everyone only sees their own contacts, requests and conversations.</span></div>", "access.f1": "📧 <strong>1.</strong> Enter your email<span class=\"tag ok\">you@email.com</span>", "access.f2": "🔢 <strong>2.</strong> Enter the 6-digit code you receive<span class=\"tag ok\">• • • • • •</span>", "access.f3": "✅ <strong>3.</strong> Done: account created and signed in, no password", "download.eyebrow": "Try it", "download.title": "Download Transfertronix for Android", "download.lead": "Install the app and talk to Reapli. It runs against Reap's sandbox: payments are simulated and no real money moves.", "download.button": "⬇ Download APK", "download.meta": "Version 1.0 · 30 MB · Android 7.0 or later", "download.s1": "<strong>Download the APK</strong> on your Android phone.", "download.s2": "<strong>Allow the install</strong> when Android asks: \"Install unknown apps\" for your browser.", "download.s3": "<strong>Sign up with just your email:</strong> you get a 6-digit code. No passwords.", "download.s4": "<strong>Add a test card</strong> in Payment methods (Reap sandbox test cards) and ask Reapli for something.", "footer.left": "⚡ Transfertronix · Reapli · Agentic Hackathon 2026", "footer.right": "Built on Reap's sandbox: payments are simulated and no real money moves.", "tech.flow": "<b>Chat</b> ──► Reapli (Gemini) <i>create_purchase_request</i>\n  └─► Supabase  purchase_requests  <i>pending</i>\n       └─► <b>/products/search</b>  Reap · only merchants that ship to the contact's country\n            └─► <b>/quotes</b>  total with shipping to the contact's address  <i>quoted</i>\n                 └─► <b>/checkouts</b>  the server re-reads the quote\n                      ├─ total &gt; cap or different currency  ──► <u>blocked</u>\n                      └─ approval on Reap's page ──► deep link to the app ──► <i>completed + orderId</i>"};
+      var TITLES = {es: "Transfertronix · Reapli, el agente de compras con presupuesto", en: "Transfertronix \u00b7 Reapli, the shopping agent with a budget"};
+      var nodes = document.querySelectorAll('[data-i18n]');
+      nodes.forEach(function (el) { el.setAttribute('data-es', el.innerHTML); });
+      function apply(lang) {
+        nodes.forEach(function (el) {
+          var key = el.getAttribute('data-i18n');
+          el.innerHTML = lang === 'en' && EN[key] ? EN[key] : el.getAttribute('data-es');
+        });
+        document.documentElement.lang = lang;
+        document.title = TITLES[lang];
+        document.querySelectorAll('.lang button').forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-lang') === lang);
+        });
+        try { localStorage.setItem('lang', lang); } catch (e) {}
+      }
+      var saved = null;
+      try { saved = localStorage.getItem('lang'); } catch (e) {}
+      var initial = saved || ((navigator.language || 'es').toLowerCase().indexOf('es') === 0 ? 'es' : 'en');
+      document.querySelectorAll('.lang button').forEach(function (b) {
+        b.addEventListener('click', function () { apply(b.getAttribute('data-lang')); });
+      });
+      apply(initial);
+    })();
+  </script>
 </body>
 </html>

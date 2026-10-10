@@ -4,6 +4,7 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const { config } = require('../config');
+const { languageOf, message } = require('../i18n');
 
 const supabase = config.supabase.url
   ? createClient(config.supabase.url, config.supabase.anonKey, { auth: { persistSession: false } })
@@ -16,12 +17,12 @@ async function requireUser(req, res, next) {
 
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
   if (!token) {
-    return res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Falta el token de sesión' } });
+    return res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: message(languageOf(req), 'MISSING_TOKEN') } });
   }
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user) {
-    return res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Sesión inválida o expirada' } });
+    return res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: message(languageOf(req), 'INVALID_SESSION') } });
   }
 
   req.user = { id: data.user.id, email: data.user.email };

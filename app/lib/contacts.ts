@@ -5,6 +5,7 @@
  */
 
 import {supabase} from './supabase';
+import {getLanguage, translate} from './i18n';
 import type {Contact, ContactInput} from '../types/contact';
 import type {ShippingAddress} from '../types/commerce';
 
@@ -35,7 +36,7 @@ export async function getContactById(contactId: string): Promise<Contact | null>
 
 function normalize(input: Partial<ContactInput>) {
   if (input.phone && !E164_PATTERN.test(input.phone.trim())) {
-    throw new Error('El teléfono debe tener formato internacional, ej: +5215512345678');
+    throw new Error(translate(getLanguage(), 'contactForm.phoneInvalid'));
   }
   const trimmed: Record<string, any> = {};
   Object.entries(input).forEach(([key, value]) => {

@@ -112,7 +112,7 @@ async function getPaymentSetup(user) {
     methods: items.map(e => ({
       id: e.id,
       status: e.status,
-      label: e.paymentMethod ? `${e.paymentMethod.network} •••• ${e.paymentMethod.last4}` : 'Tarjeta en registro',
+      label: e.paymentMethod ? `${e.paymentMethod.network} •••• ${e.paymentMethod.last4}` : null,
       actionUrl: e.status === 'REQUIRES_ACTION' ? e.nextAction?.url : undefined,
     })),
   };

@@ -17,12 +17,43 @@
     video { height: min(86vh, 86dvh); max-width: 100%; aspect-ratio: 9 / 16; border-radius: 22px; background: #000; box-shadow: 0 30px 80px -20px rgba(0,0,0,.8); }
     p { font-size: 14px; color: var(--muted); text-align: center; }
     a { color: #93c5fd; text-decoration: none; font-weight: 600; }
+    .lang { display: flex; gap: 2px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 3px; }
+    .lang button { background: none; border: 0; color: var(--muted); font: 600 13px -apple-system, sans-serif; padding: 6px 12px; border-radius: 7px; cursor: pointer; }
+    .lang button.active { background: var(--accent); color: #fff; }
   </style>
 </head>
 <body>
   <video controls playsinline autoplay muted preload="auto" poster="/video/poster.jpg">
     <source src="/video/transfertronix-demo.mp4" type="video/mp4">
   </video>
-  <p>⚡ Transfertronix · Reapli — <a href="/">Conoce el proyecto</a> · Activa el sonido para escuchar la música 🔊</p>
+  <p id="caption">⚡ Transfertronix · Reapli — <a href="/">Conoce el proyecto</a> · Activa el sonido para escuchar la música 🔊</p>
+  <div class="lang">
+    <button type="button" data-lang="es">ES</button>
+    <button type="button" data-lang="en">EN</button>
+  </div>
+  <script>
+    (function () {
+      var TEXT = {
+        es: '⚡ Transfertronix · Reapli — <a href="/">Conoce el proyecto</a> · Activa el sonido para escuchar la música 🔊',
+        en: '⚡ Transfertronix · Reapli — <a href="/">Learn about the project</a> · Turn on sound to hear the music 🔊'
+      };
+      var TITLES = {es: 'Transfertronix · Demo de Reapli', en: 'Transfertronix · Reapli demo'};
+      function apply(lang) {
+        document.getElementById('caption').innerHTML = TEXT[lang];
+        document.title = TITLES[lang];
+        document.documentElement.lang = lang;
+        document.querySelectorAll('.lang button').forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-lang') === lang);
+        });
+        try { localStorage.setItem('lang', lang); } catch (e) {}
+      }
+      var saved = null;
+      try { saved = localStorage.getItem('lang'); } catch (e) {}
+      document.querySelectorAll('.lang button').forEach(function (b) {
+        b.addEventListener('click', function () { apply(b.getAttribute('data-lang')); });
+      });
+      apply(saved || ((navigator.language || 'es').toLowerCase().indexOf('es') === 0 ? 'es' : 'en'));
+    })();
+  </script>
 </body>
 </html>

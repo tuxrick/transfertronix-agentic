@@ -107,14 +107,16 @@ router.post('/checkouts', async (req, res) => {
       throw httpError(
         422,
         'BUDGET_CURRENCY_MISMATCH',
-        `El tope está en ${maxCurrency} y la cotización en ${quote.total?.currency}; define el tope en ${quote.total?.currency}`,
+        `Cap currency ${maxCurrency} does not match quote currency ${quote.total?.currency}`,
+        { capCurrency: maxCurrency, quoteCurrency: quote.total?.currency },
       );
     }
     if (quote.total?.amount > Number(maxAmount)) {
       throw httpError(
         422,
         'BUDGET_EXCEEDED',
-        `El total (${quote.total.amount} ${quote.total.currency}) excede el tope autorizado (${maxAmount} ${maxCurrency || ''})`.trim(),
+        `Total ${quote.total.amount} exceeds cap ${maxAmount}`,
+        { total: quote.total.amount, currency: quote.total.currency, cap: maxAmount, capCurrency: maxCurrency || '' },
       );
     }
   }

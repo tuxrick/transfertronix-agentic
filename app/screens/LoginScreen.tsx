@@ -11,25 +11,28 @@ import {
   Platform,
 } from 'react-native';
 import {supabase} from '../lib/supabase';
+import {useI18n} from '../lib/i18n';
+import LanguageToggle from '../components/LanguageToggle';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export default function LoginScreen({navigation}: Props) {
+  const {t} = useI18n();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSendOTP = async () => {
     if (!email) {
-      Alert.alert('Error', 'Por favor ingresa tu correo electrónico');
+      Alert.alert(t('common.error'), t('login.enterEmail'));
       return;
     }
 
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Por favor ingresa un correo electrónico válido');
+      Alert.alert(t('common.error'), t('login.invalidEmail'));
       return;
     }
 
@@ -45,8 +48,8 @@ export default function LoginScreen({navigation}: Props) {
       if (error) throw error;
 
       Alert.alert(
-        '¡Código enviado!',
-        'Revisa tu correo electrónico. Te hemos enviado un código de 6 dígitos.',
+        t('login.codeSentTitle'),
+        t('login.codeSentBody'),
         [
           {
             text: 'OK',
@@ -58,7 +61,7 @@ export default function LoginScreen({navigation}: Props) {
         ],
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setLoading(false);
     }
@@ -73,15 +76,18 @@ export default function LoginScreen({navigation}: Props) {
         <View style={styles.header}>
           <Text style={styles.logo}>⚡</Text>
           <Text style={styles.title}>Transfertronix</Text>
-          <Text style={styles.subtitle}>Inicia sesión con tu correo</Text>
+          <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
+          <View style={styles.languageRow}>
+            <LanguageToggle />
+          </View>
         </View>
 
         {/* Form */}
         <View style={styles.form}>
-          <Text style={styles.label}>Correo electrónico</Text>
+          <Text style={styles.label}>{t('login.emailLabel')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="tu@email.com"
+            placeholder={t('login.emailPlaceholder')}
             placeholderTextColor="#64748b"
             value={email}
             onChangeText={setEmail}
@@ -100,28 +106,27 @@ export default function LoginScreen({navigation}: Props) {
             {loading ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
-              <Text style={styles.buttonText}>Enviar código</Text>
+              <Text style={styles.buttonText}>{t('login.sendCode')}</Text>
             )}
           </TouchableOpacity>
 
           <View style={styles.infoBox}>
             <Text style={styles.infoEmoji}>🔒</Text>
-            <Text style={styles.infoText}>
-              Te enviaremos un código de 6 dígitos a tu correo electrónico
-            </Text>
+            <Text style={styles.infoText}>{t('login.info')}</Text>
           </View>
         </View>
 
         {/* Footer */}
-        <Text style={styles.footer}>
-          Autenticación segura sin contraseñas
-        </Text>
+        <Text style={styles.footer}>{t('login.footer')}</Text>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  languageRow: {
+    marginTop: 16,
+  },
   container: {
     flex: 1,
     backgroundColor: '#0f172a',

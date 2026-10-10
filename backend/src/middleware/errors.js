@@ -1,5 +1,6 @@
 const { ReapError } = require('../reap/client');
 const { KwalError } = require('../kwal/client');
+const { languageOf, message } = require('../i18n');
 
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
@@ -12,14 +13,16 @@ function errorHandler(err, req, res, next) {
     return res.status(err.status).json({ error: { code: err.code, message: err.message } });
   }
   if (err.status && err.code) {
-    return res.status(err.status).json({ error: { code: err.code, message: err.message } });
+    const text = message(languageOf(req), err.messageKey || err.code, err.params) || err.message;
+    return res.status(err.status).json({ error: { code: err.code, message: text } });
   }
   console.error(err);
-  res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor' } });
+  res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: message(languageOf(req), 'INTERNAL_ERROR') } });
 }
 
-function httpError(status, code, message) {
-  return Object.assign(new Error(message), { status, code });
+/** `params` fill the localized message; `messageKey` overrides the catalog key when it differs from `code`. */
+function httpError(status, code, fallback, params = {}, messageKey) {
+  return Object.assign(new Error(fallback), { status, code, params, messageKey });
 }
 
 module.exports = { errorHandler, httpError };

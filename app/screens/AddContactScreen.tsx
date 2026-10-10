@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useMemo} from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../types/navigation';
 import type {ContactInput} from '../types/contact';
 import {createContact, updateContact, getContactById} from '../lib/contacts';
+import {useI18n} from '../lib/i18n';
 
 type AddContactRouteProp = RouteProp<RootStackParamList, 'AddContact'>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -33,55 +34,63 @@ interface FieldConfig {
   multiline?: boolean;
 }
 
-const SECTIONS: {title?: string; fields: FieldConfig[]}[] = [
-  {
-    fields: [
-      {key: 'name', label: 'Nombre completo *', placeholder: 'Ej: María López', autoCapitalize: 'words'},
-      {
-        key: 'nickname',
-        label: 'Nickname para Reapli',
-        placeholder: 'Ej: mamá, abuela, equipo diseño',
-        hint: 'Úsalo en el chat: "mándale café a papá"',
-        autoCapitalize: 'none',
-      },
-      {key: 'email', label: 'Email', placeholder: 'maria@ejemplo.com', keyboardType: 'email-address', autoCapitalize: 'none'},
-      {
-        key: 'phone',
-        label: 'Teléfono (requerido para envíos)',
-        placeholder: '+5215512345678',
-        hint: 'Formato internacional con +',
-        keyboardType: 'phone-pad',
-      },
-    ],
-  },
-  {
-    title: '📦 Dirección de envío',
-    fields: [
-      {key: 'address_line1', label: 'Calle y número', placeholder: 'Av. Reforma 123'},
-      {key: 'address_line2', label: 'Interior / colonia', placeholder: 'Depto 4, Col. Juárez'},
-      {key: 'city', label: 'Ciudad', placeholder: 'Ciudad de México', autoCapitalize: 'words'},
-      {key: 'region', label: 'Estado', placeholder: 'CDMX', autoCapitalize: 'words'},
-      {key: 'postal_code', label: 'Código postal', placeholder: '06600', keyboardType: 'number-pad'},
-      {key: 'country', label: 'País (código ISO)', placeholder: 'MX', autoCapitalize: 'characters'},
-    ],
-  },
-  {
-    title: '💰 Presupuesto',
-    fields: [
-      {
-        key: 'spend_limit',
-        label: 'Tope por compra',
-        placeholder: '500',
-        hint: 'Reapli no podrá cobrar más que esto para este contacto',
-        keyboardType: 'decimal-pad',
-      },
-      {key: 'currency', label: 'Moneda', placeholder: 'MXN', autoCapitalize: 'characters'},
-      {key: 'notes', label: 'Notas', placeholder: 'Talla, marcas preferidas, alergias...', multiline: true},
-    ],
-  },
-];
+type Section = {title?: string; fields: FieldConfig[]};
+
+function buildSections(t: (key: string) => string): Section[] {
+  return [
+    {
+      fields: [
+        {key: 'name', label: t('contactForm.name'), placeholder: t('contactForm.namePlaceholder'), autoCapitalize: 'words'},
+        {
+          key: 'nickname',
+          label: t('contactForm.nickname'),
+          placeholder: t('contactForm.nicknamePlaceholder'),
+          hint: t('contactForm.nicknameHint'),
+          autoCapitalize: 'none',
+        },
+        {key: 'email', label: t('contactForm.email'), placeholder: 'maria@ejemplo.com', keyboardType: 'email-address', autoCapitalize: 'none'},
+        {
+          key: 'phone',
+          label: t('contactForm.phone'),
+          placeholder: '+5215512345678',
+          hint: t('contactForm.phoneHint'),
+          keyboardType: 'phone-pad',
+        },
+      ],
+    },
+    {
+      title: t('contactForm.shipping'),
+      fields: [
+        {key: 'address_line1', label: t('contactForm.street'), placeholder: t('contactForm.streetPlaceholder')},
+        {key: 'address_line2', label: t('contactForm.line2'), placeholder: t('contactForm.line2Placeholder')},
+        {key: 'city', label: t('contactForm.city'), placeholder: t('contactForm.cityPlaceholder'), autoCapitalize: 'words'},
+        {key: 'region', label: t('contactForm.region'), placeholder: 'CDMX', autoCapitalize: 'words'},
+        {key: 'postal_code', label: t('contactForm.postalCode'), placeholder: '06600', keyboardType: 'number-pad'},
+        {key: 'country', label: t('contactForm.country'), placeholder: 'MX', autoCapitalize: 'characters'},
+      ],
+    },
+    {
+      title: t('contactForm.budget'),
+      fields: [
+        {
+          key: 'spend_limit',
+          label: t('contactForm.cap'),
+          placeholder: '500',
+          hint: t('contactForm.capHint'),
+          keyboardType: 'decimal-pad',
+        },
+        {key: 'currency', label: t('contactForm.currency'), placeholder: 'MXN', autoCapitalize: 'characters'},
+        {key: 'notes', label: t('contactForm.notes'), placeholder: t('contactForm.notesPlaceholder'), multiline: true},
+      ],
+    },
+  ];
+}
+
+const FIELD_KEYS: TextField[] = buildSections(key => key).flatMap(section => section.fields.map(field => field.key));
 
 export default function AddContactScreen() {
+  const {t} = useI18n();
+  const sections = useMemo(() => buildSections(t), [t]);
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<AddContactRouteProp>();
   const contactId = route.params?.contactId;
@@ -98,7 +107,7 @@ export default function AddContactScreen() {
       const contact = await getContactById(contactId!);
       if (contact) {
         const loaded: Partial<Record<TextField, string>> = {};
-        SECTIONS.flatMap(section => section.fields).forEach(({key}) => {
+        FIELD_KEYS.forEach(key => {
           const value = contact[key as keyof typeof contact];
           if (value !== null && value !== undefined) loaded[key] = String(value);
         });
@@ -106,11 +115,11 @@ export default function AddContactScreen() {
         setFavorite(contact.favorite);
       }
     } catch {
-      Alert.alert('Error', 'No se pudo cargar el contacto');
+      Alert.alert(t('common.error'), t('contactForm.loadError'));
     } finally {
       setLoadingData(false);
     }
-  }, [contactId]);
+  }, [contactId, t]);
 
   useEffect(() => {
     if (contactId) loadContact();
@@ -118,12 +127,12 @@ export default function AddContactScreen() {
 
   const handleSave = async () => {
     if (!values.name?.trim()) {
-      Alert.alert('Error', 'Por favor ingresa el nombre del contacto');
+      Alert.alert(t('common.error'), t('contactForm.nameRequired'));
       return;
     }
     const spendLimit = values.spend_limit ? Number(values.spend_limit) : undefined;
     if (spendLimit !== undefined && !(spendLimit > 0)) {
-      Alert.alert('Error', 'El tope por compra debe ser un número mayor a 0');
+      Alert.alert(t('common.error'), t('contactForm.capInvalid'));
       return;
     }
 
@@ -141,12 +150,12 @@ export default function AddContactScreen() {
       } else {
         await createContact(input);
       }
-      Alert.alert('Éxito', contactId ? 'Contacto actualizado' : 'Contacto agregado', [
+      Alert.alert(t('common.success'), contactId ? t('contactForm.updated') : t('contactForm.created'), [
         {text: 'OK', onPress: () => navigation.goBack()},
       ]);
     } catch (error: any) {
       console.error('Error saving contact:', error);
-      Alert.alert('Error', error.message || 'No se pudo guardar el contacto');
+      Alert.alert(t('common.error'), error.message || t('contactForm.saveError'));
     } finally {
       setLoading(false);
     }
@@ -166,7 +175,7 @@ export default function AddContactScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{contactId ? 'Editar Contacto' : 'Nuevo Contacto'}</Text>
+        <Text style={styles.title}>{contactId ? t('contactForm.editTitle') : t('contactForm.newTitle')}</Text>
         <View style={{width: 40}} />
       </View>
 
@@ -174,12 +183,12 @@ export default function AddContactScreen() {
         <View style={styles.infoBox}>
           <Text style={styles.infoIcon}>💡</Text>
           <Text style={styles.infoText}>
-            Reapli usa la dirección para cotizar envíos y respeta el tope por compra al cobrar.
+            {t('contactForm.info')}
           </Text>
         </View>
 
         <View style={styles.form}>
-          {SECTIONS.map(section => (
+          {sections.map(section => (
             <View key={section.title || 'basic'}>
               {section.title && <Text style={[styles.label, styles.sectionTitle]}>{section.title}</Text>}
               {section.fields.map(field => (
@@ -205,8 +214,8 @@ export default function AddContactScreen() {
 
           <View style={styles.switchGroup}>
             <View style={styles.switchLabel}>
-              <Text style={styles.label}>⭐ Marcar como favorito</Text>
-              <Text style={styles.hint}>Los favoritos aparecen primero en la lista</Text>
+              <Text style={styles.label}>{t('contactForm.favorite')}</Text>
+              <Text style={styles.hint}>{t('contactForm.favoriteHint')}</Text>
             </View>
             <Switch
               value={favorite}
@@ -224,7 +233,7 @@ export default function AddContactScreen() {
           {loading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.saveButtonText}>{contactId ? '💾 Actualizar Contacto' : '➕ Agregar Contacto'}</Text>
+            <Text style={styles.saveButtonText}>{contactId ? t('contactForm.save') : t('contactForm.create')}</Text>
           )}
         </TouchableOpacity>
 

@@ -32,6 +32,7 @@ import {
   syncCheckout,
 } from '../lib/purchaseRequests';
 import {clearChatHistory, loadChatHistory, saveChatMessage} from '../lib/chatHistory';
+import {translate, useI18n, type Language} from '../lib/i18n';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -54,15 +55,6 @@ const DEFAULT_COUNTRY = 'MX';
 const PAYMENT_POLL_ATTEMPTS = 12;
 const PAYMENT_POLL_INTERVAL_MS = 5000;
 
-const STATUS_LABELS: Record<PurchaseRequest['status'], string> = {
-  pending: '🕐 Pendiente',
-  quoted: '🧾 Cotizada',
-  awaiting_approval: '⏳ Esperando aprobación',
-  completed: '✅ Comprada',
-  failed: '❌ Falló',
-  expired: '⌛ Expiró',
-  cancelled: '🚫 Cancelada',
-};
 
 function getQueryParam(url: string, key: string): string | undefined {
   const match = url.match(new RegExp(`[?&]${key}=([^&#]*)`));
@@ -73,31 +65,19 @@ function formatMoney(amount: number, currency: string) {
   return `${amount.toFixed(2)} ${currency}`;
 }
 
-function formatQuote(quote: Quote) {
+function formatQuote(quote: Quote, t: (key: string) => string) {
   const lines: string[] = [];
-  if (quote.subtotal) lines.push(`Subtotal: ${formatMoney(quote.subtotal.amount, quote.subtotal.currency)}`);
-  if (quote.shipping) lines.push(`Envío: ${formatMoney(quote.shipping.amount, quote.shipping.currency)}`);
-  if (quote.tax) lines.push(`Impuestos: ${formatMoney(quote.tax.amount, quote.tax.currency)}`);
+  if (quote.subtotal) lines.push(`${t('chat.subtotal')}: ${formatMoney(quote.subtotal.amount, quote.subtotal.currency)}`);
+  if (quote.shipping) lines.push(`${t('chat.shipping')}: ${formatMoney(quote.shipping.amount, quote.shipping.currency)}`);
+  if (quote.tax) lines.push(`${t('chat.taxes')}: ${formatMoney(quote.tax.amount, quote.tax.currency)}`);
   quote.discounts.forEach(d => lines.push(`${d.name}: -${formatMoney(d.amount.amount, d.amount.currency)}`));
-  lines.push(`\nTotal: ${formatMoney(quote.total.amount, quote.total.currency)}`);
-  if (quote.demo) lines.push('\n⚠️ Cotización simulada: el sandbox de Reap no pudo cotizar');
+  lines.push(`\n${t('chat.total')}: ${formatMoney(quote.total.amount, quote.total.currency)}`);
+  if (quote.demo) lines.push(`\n${t('chat.simulatedQuote')}`);
   return lines.join('\n');
 }
 
-function welcomeMessage(): Message {
-  return {
-    id: 'welcome',
-    text:
-      '¡Hola! Soy Reapli 🤖, tu agente de compras en Transfertronix.\n\n' +
-      'Compro lo que tú, tu familia o tu equipo necesiten, dentro del tope que definas, y tú confirmas cada cargo.\n\n' +
-      'Ejemplos:\n' +
-      '⌨️ "Ana necesita un teclado inalámbrico, máximo 80 dólares"\n' +
-      '☕ "Mándale café de especialidad a mi papá"\n' +
-      '📦 "Atiende lo que pidió Olivia"\n' +
-      '📋 "¿Cómo van mis pedidos?"',
-    sender: 'ai',
-    timestamp: new Date(),
-  };
+function welcomeMessage(text: string): Message {
+  return {id: 'welcome', text, sender: 'ai', timestamp: new Date()};
 }
 
 // Gemini needs the history to start with a user turn and only carries text.
@@ -111,7 +91,8 @@ function toGeminiHistory(stored: {sender: 'user' | 'ai'; text: string}[]): Conte
 }
 
 export default function ChatScreen({navigation}: Props) {
-  const [messages, setMessages] = useState<Message[]>([welcomeMessage()]);
+  const {t, language, setLanguage, locale} = useI18n();
+  const [messages, setMessages] = useState<Message[]>(() => [welcomeMessage(t('chat.welcome'))]);
   const [inputText, setInputText] = useState('');
   const [processing, setProcessing] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -183,25 +164,29 @@ export default function ChatScreen({navigation}: Props) {
       if (stored.length === 0) return;
       historyRef.current = toGeminiHistory(stored);
       setMessages([
-        welcomeMessage(),
+        welcomeMessage(t('chat.welcome')),
         ...stored.map(m => ({id: m.id, text: m.text, sender: m.sender, timestamp: new Date(m.created_at)})),
       ]);
     });
   }, []);
 
+  useEffect(() => {
+    setMessages(prev => prev.map(m => (m.id === 'welcome' ? {...m, text: t('chat.welcome')} : m)));
+  }, [t]);
+
   const confirmClearHistory = () => {
-    Alert.alert('Borrar historial', '¿Borrar toda la conversación con Reapli?', [
-      {text: 'Cancelar', style: 'cancel'},
+    Alert.alert(t('chat.clearTitle'), t('chat.clearConfirm'), [
+      {text: t('common.cancel'), style: 'cancel'},
       {
-        text: 'Borrar',
+        text: t('chat.clear'),
         style: 'destructive',
         onPress: async () => {
           try {
             await clearChatHistory();
             historyRef.current = [];
-            setMessages([welcomeMessage()]);
+            setMessages([welcomeMessage(t('chat.welcome'))]);
           } catch (error: any) {
-            Alert.alert('Error', error.message);
+            Alert.alert(t('common.error'), error.message);
           }
         },
       },
@@ -212,13 +197,13 @@ export default function ChatScreen({navigation}: Props) {
     async (error: unknown) => {
       if (error instanceof ApiError && error.code === 'NO_PAYMENT_METHOD') {
         await addMessage(`💳 ${error.message}.`, 'ai', {
-          actions: [{label: 'Agregar método de pago', onPress: () => navigation.navigate('PaymentMethods')}],
+          actions: [{label: t('chat.needPaymentMethod'), onPress: () => navigation.navigate('PaymentMethods')}],
         });
         return;
       }
       if (error instanceof ApiError && error.code === 'INSUFFICIENT_FUNDS') {
         await addMessage(`💧 ${error.message}.`, 'ai', {
-          actions: [{label: 'Ver bóveda', onPress: () => navigation.navigate('PaymentMethods')}],
+          actions: [{label: t('chat.seeVault'), onPress: () => navigation.navigate('PaymentMethods')}],
         });
         return;
       }
@@ -227,7 +212,7 @@ export default function ChatScreen({navigation}: Props) {
         return;
       }
       if (error instanceof ApiError && error.code === 'BUDGET_EXCEEDED') {
-        await addMessage(`🛑 ${error.message}. Busca otra opción o sube el tope.`, 'ai');
+        await addMessage(`🛑 ${error.message}. ${t('chat.overCapHelp')}`, 'ai');
         return;
       }
       await addMessage(`❌ ${(error as Error).message}`, 'ai');
@@ -244,8 +229,8 @@ export default function ChatScreen({navigation}: Props) {
 
       if (kind === 'enrollment') {
         await loadContext();
-        await addMessage('💳 Volviste de registrar tu tarjeta. Revisa su estado en Métodos de pago.', 'ai', {
-          actions: [{label: 'Ver métodos de pago', onPress: () => navigation.navigate('PaymentMethods')}],
+        await addMessage(t('chat.cardReturned'), 'ai', {
+          actions: [{label: t('chat.seePaymentMethods'), onPress: () => navigation.navigate('PaymentMethods')}],
         });
         return;
       }
@@ -257,15 +242,15 @@ export default function ChatScreen({navigation}: Props) {
         const synced = await syncCheckout(request);
         if (synced.status === 'completed') {
           await addMessage(
-            `✅ ¡Compra confirmada!\n\n📦 ${synced.product_snapshot?.name || synced.item_description}\n` +
-              `👤 Para: ${synced.contact_name || 'ti'}\n` +
+            `${t('chat.purchaseConfirmed')}\n\n📦 ${synced.product_snapshot?.name || synced.item_description}\n` +
+              `👤 ${t('chat.for')}: ${synced.contact_name || t('chat.you')}\n` +
               `💰 ${formatMoney(synced.final_amount ?? synced.quoted_amount ?? 0, synced.currency)}\n` +
-              `🧾 Orden: ${synced.order_id}` +
-              (synced.product_snapshot?.demo ? '\n\n⚠️ Compra simulada (sandbox de Reap sin cotizaciones)' : ''),
+              `🧾 ${t('chat.order')}: ${synced.order_id}` +
+              (synced.product_snapshot?.demo ? `\n\n${t('chat.simulatedPurchase')}` : ''),
             'ai',
           );
         } else {
-          await addMessage(`Estado de la compra: ${STATUS_LABELS[synced.status]}`, 'ai');
+          await addMessage(t('chat.purchaseStatus', {status: t(`chat.statusLabels.${synced.status}`)}), 'ai');
         }
         await loadContext();
       } catch (error) {
@@ -294,25 +279,25 @@ export default function ChatScreen({navigation}: Props) {
   const confirmAndCheckout = async (request: PurchaseRequest, quote: Quote, product: Product) => {
     const isReap = provider === 'reap';
     Alert.alert(
-      '🛒 Confirmar compra',
+      t('chat.confirmTitle'),
       `${product.name}\n${product.merchant || ''}\n\n` +
-        `👤 Para: ${request.contact_name || 'ti'}\n\n${formatQuote(quote)}\n\n` +
+        `👤 ${t('chat.for')}: ${request.contact_name || t('chat.you')}\n\n${formatQuote(quote, t)}\n\n` +
         (isReap
-          ? 'Aprobarás el cargo en la página segura de Reap.'
-          : 'Se pagará con la tarjeta respaldada por tu bóveda USDC.'),
+          ? t('chat.reapApprovalNote')
+          : t('chat.vaultApprovalNote')),
       [
-        {text: 'Cancelar', style: 'cancel', onPress: () => addMessage('Compra cancelada.', 'ai', {skipDelay: true})},
+        {text: t('common.cancel'), style: 'cancel', onPress: () => addMessage(t('chat.cancelled'), 'ai', {skipDelay: true})},
         {
-          text: isReap ? 'Aprobar en Reap' : 'Pagar con bóveda',
+          text: isReap ? t('chat.approveReap') : t('chat.payVault'),
           onPress: async () => {
             try {
               const updated = await startCheckout(request);
               if (updated.status === 'completed') {
                 await handleReturnUrl(`transfertronix://agentic/return?kind=checkout&ref=${updated.id}`);
               } else if (isReap) {
-                await addMessage('🔐 Abrí la página de aprobación de Reap. Cuando termines, regresa a la app.', 'ai');
+                await addMessage(t('chat.openedReap'), 'ai');
               } else {
-                await addMessage('⏳ La bóveda está pagando, te aviso cuando se confirme...', 'ai');
+                await addMessage(t('chat.paymentPolling'), 'ai');
                 await pollPayment(updated);
               }
             } catch (error) {
@@ -326,7 +311,7 @@ export default function ChatScreen({navigation}: Props) {
 
   const selectProduct = async (request: PurchaseRequest, product: Product, contact?: Contact) => {
     try {
-      await addMessage(`⏳ Cotizando "${product.name}"...`, 'ai', {skipDelay: true});
+      await addMessage(t('chat.quoting', {name: product.name}), 'ai', {skipDelay: true});
       const {request: quoted, quote} = await quotePurchase(request, product, contact);
       await confirmAndCheckout(quoted, quote, product);
     } catch (error) {
@@ -335,7 +320,7 @@ export default function ChatScreen({navigation}: Props) {
   };
 
   const searchOptions = async (request: PurchaseRequest, contact?: Contact) => {
-    await addMessage(`🔎 Buscando "${request.item_description}"...`, 'ai', {skipDelay: true});
+    await addMessage(t('chat.searching', {query: request.item_description}), 'ai', {skipDelay: true});
     const result = await searchProducts({
       query: request.item_description,
       country: contact?.country || DEFAULT_COUNTRY,
@@ -345,7 +330,7 @@ export default function ChatScreen({navigation}: Props) {
     });
 
     if (result.products.length === 0) {
-      await addMessage('No encontré opciones disponibles en los comercios soportados. Prueba con otra descripción.', 'ai');
+      await addMessage(t('chat.noResults'), 'ai');
       return;
     }
 
@@ -356,15 +341,15 @@ export default function ChatScreen({navigation}: Props) {
       );
     const lines = result.products.map((p, i) => {
       const price = p.price ? ` · ${formatMoney(p.price.amount, p.price.currency)}` : '';
-      const flag = overCap(p) ? '\n   ⚠️ Excede el tope' : '';
-      return `${i + 1}. ${p.name}\n   ${p.merchant || 'Comercio compatible'}${price}${flag}`;
+      const flag = overCap(p) ? `\n   ${t('chat.overCap')}` : '';
+      return `${i + 1}. ${p.name}\n   ${p.merchant || t('chat.compatibleMerchant')}${price}${flag}`;
     });
     const cap = request.max_amount
-      ? `\n\n💰 Tope: ${formatMoney(Number(request.max_amount), request.max_currency || request.currency)}`
+      ? `\n\n${t('chat.capLine', {amount: formatMoney(Number(request.max_amount), request.max_currency || request.currency)})}`
       : '';
-    await addMessage(`Encontré estas opciones:\n\n${lines.join('\n\n')}${cap}`, 'ai', {
+    await addMessage(`${t('chat.options')}\n\n${lines.join('\n\n')}${cap}`, 'ai', {
       actions: result.products.map((p, i) => ({
-        label: `Elegir ${i + 1}`,
+        label: t('chat.choose', {n: i + 1}),
         onPress: () => selectProduct(request, p, contact),
       })),
     });
@@ -374,14 +359,14 @@ export default function ChatScreen({navigation}: Props) {
     if (!name) return undefined;
     const contact = findContact(contacts, name);
     if (!contact) {
-      await addMessage(`No encontré a "${name}" en tus contactos.`, 'ai', {
-        actions: [{label: 'Agregar contacto', onPress: () => navigation.navigate('AddContact')}],
+      await addMessage(t('chat.contactNotFound', {name}), 'ai', {
+        actions: [{label: t('chat.addContact'), onPress: () => navigation.navigate('AddContact')}],
       });
       return null;
     }
     if (!hasShippingAddress(contact)) {
-      await addMessage(`${contact.name} no tiene dirección de envío completa.`, 'ai', {
-        actions: [{label: 'Completar dirección', onPress: () => navigation.navigate('AddContact', {contactId: contact.id})}],
+      await addMessage(t('chat.missingAddress', {name: contact.name}), 'ai', {
+        actions: [{label: t('chat.completeAddress'), onPress: () => navigation.navigate('AddContact', {contactId: contact.id})}],
       });
       return null;
     }
@@ -410,7 +395,7 @@ export default function ChatScreen({navigation}: Props) {
 
     const request = openRequests.find(r => r.contact_id === contact.id && r.status !== 'awaiting_approval');
     if (!request) {
-      await addMessage(`${contact.name} no tiene solicitudes pendientes.`, 'ai');
+      await addMessage(t('chat.noPending', {name: contact.name}), 'ai');
       return;
     }
     await searchOptions(request, contact);
@@ -420,19 +405,25 @@ export default function ChatScreen({navigation}: Props) {
     const filter = args.status === 'completed' ? 'completed' : args.status === 'all' ? undefined : OPEN_STATUSES;
     const requests = await getPurchaseRequests(filter);
     if (requests.length === 0) {
-      await addMessage('📋 No hay solicitudes por ahora.', 'ai');
+      await addMessage(t('chat.noRequests'), 'ai');
       return;
     }
     const lines = requests.slice(0, 10).map(r => {
       const amount = r.final_amount ?? r.quoted_amount;
       return (
-        `${STATUS_LABELS[r.status]} · ${r.contact_name || 'Tú'}\n   ${r.item_description}` +
+        `${t(`chat.statusLabels.${r.status}`)} · ${r.contact_name || t('requests.forMe')}\n   ${r.item_description}` +
         (amount ? ` · ${formatMoney(amount, r.currency)}` : '')
       );
     });
-    await addMessage(`📋 Solicitudes (${requests.length}):\n\n${lines.join('\n\n')}`, 'ai', {
-      actions: [{label: 'Ver todas', onPress: () => navigation.navigate('PurchaseRequests')}],
+    await addMessage(`${t('chat.requestsTitle', {count: requests.length})}\n\n${lines.join('\n\n')}`, 'ai', {
+      actions: [{label: t('chat.seeAll'), onPress: () => navigation.navigate('PurchaseRequests')}],
     });
+  };
+
+  const handleSetLanguage = async (args: FunctionCall['args']) => {
+    const next: Language = args.language === 'en' ? 'en' : 'es';
+    setLanguage(next);
+    await addMessage(translate(next, 'chat.languageChanged'), 'ai');
   };
 
   const handleFunctionCall = async (functionCall: FunctionCall) => {
@@ -444,6 +435,8 @@ export default function ChatScreen({navigation}: Props) {
           return await handleFulfillPurchaseRequest(functionCall.args);
         case 'list_purchase_requests':
           return await handleListPurchaseRequests(functionCall.args);
+        case 'set_language':
+          return await handleSetLanguage(functionCall.args);
         default:
           console.warn('Función desconocida:', functionCall.name);
       }
@@ -463,7 +456,7 @@ export default function ChatScreen({navigation}: Props) {
     try {
       const aiResponse = await processMessageWithAI(
         userMessage,
-        {contacts, openRequests, hasPaymentMethod, provider, shippingCatalog},
+        {contacts, openRequests, hasPaymentMethod, provider, shippingCatalog, language},
         historyRef.current,
       );
 
@@ -483,7 +476,7 @@ export default function ChatScreen({navigation}: Props) {
       }
     } catch (error) {
       console.error('Error processing message:', error);
-      addMessage('Lo siento, hubo un error procesando tu mensaje. ¿Podrías intentarlo de nuevo?', 'ai');
+      addMessage(t('chat.genericError'), 'ai');
     } finally {
       setProcessing(false);
     }
@@ -510,7 +503,7 @@ export default function ChatScreen({navigation}: Props) {
           )}
           {!isTyping && (
             <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>
-              {item.timestamp.toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit'})}
+              {item.timestamp.toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit'})}
             </Text>
           )}
         </View>
@@ -523,7 +516,7 @@ export default function ChatScreen({navigation}: Props) {
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerLeft} onLongPress={confirmClearHistory} activeOpacity={0.8}>
           <Text style={styles.headerTitle}>Reapli</Text>
-          <Text style={styles.headerSubtitle}>{processing ? '🤖 Reapli está pensando...' : 'Agente de compras · Transfertronix'}</Text>
+          <Text style={styles.headerSubtitle}>{processing ? t('chat.thinking') : t('chat.subtitle')}</Text>
         </TouchableOpacity>
         <View style={styles.headerRight}>
           <View style={styles.statusIndicator}>
@@ -560,7 +553,7 @@ export default function ChatScreen({navigation}: Props) {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder="Ej: Ana necesita un teclado, máximo 80 USD"
+              placeholder={t('chat.placeholder')}
               placeholderTextColor="#64748b"
               value={inputText}
               onChangeText={setInputText}
@@ -576,7 +569,7 @@ export default function ChatScreen({navigation}: Props) {
               {processing ? <ActivityIndicator size="small" color="#ffffff" /> : <Text style={styles.sendIcon}>➤</Text>}
             </TouchableOpacity>
           </View>
-          <Text style={styles.inputHint}>🔐 Solo comercios compatibles · tú confirmas cada cargo</Text>
+          <Text style={styles.inputHint}>{t('chat.hint')}</Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -155,13 +155,9 @@ async function createCheckout({ quoteId }) {
   const fundingState = shortState(funding.state, 'PARTICIPANT_FUNDING_STATE_');
   if (fundingState !== 'READY') {
     const shortfall = toMoney(funding.shortfall);
-    throw httpError(
-      409,
-      'INSUFFICIENT_FUNDS',
-      shortfall
-        ? `La bóveda necesita ${shortfall.amount} ${shortfall.currency} más para esta compra`
-        : `La bóveda no está lista para pagar (${fundingState})`,
-    );
+    throw shortfall
+      ? httpError(409, 'INSUFFICIENT_FUNDS', 'Insufficient vault funds', shortfall)
+      : httpError(409, 'INSUFFICIENT_FUNDS', 'Vault not ready', { state: fundingState }, 'VAULT_NOT_READY');
   }
   const payment = await kwalRequest('POST', '/payments', {
     body: { paymentId: `pay_${randomUUID().replace(/-/g, '')}`, quoteId },

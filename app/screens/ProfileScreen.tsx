@@ -10,12 +10,15 @@ import {
   Platform,
 } from 'react-native';
 import {supabase} from '../lib/supabase';
+import {useI18n} from '../lib/i18n';
+import LanguageToggle from '../components/LanguageToggle';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
 export default function ProfileScreen({navigation}: Props) {
+  const {t, locale} = useI18n();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,15 +35,15 @@ export default function ProfileScreen({navigation}: Props) {
 
   const handleSignOut = async () => {
     Alert.alert(
-      'Cerrar sesión',
-      '¿Estás seguro que deseas cerrar sesión?',
+      t('profile.signOutTitle'),
+      t('profile.signOutConfirm'),
       [
         {
-          text: 'Cancelar',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Sí, cerrar sesión',
+          text: t('profile.signOutYes'),
           style: 'destructive',
           onPress: async () => {
             setLoading(true);
@@ -48,7 +51,7 @@ export default function ProfileScreen({navigation}: Props) {
               const {error} = await supabase.auth.signOut();
               if (error) throw error;
             } catch (error: any) {
-              Alert.alert('Error', error.message);
+              Alert.alert(t('common.error'), error.message);
             } finally {
               setLoading(false);
             }
@@ -67,7 +70,7 @@ export default function ProfileScreen({navigation}: Props) {
           onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mi Perfil</Text>
+        <Text style={styles.headerTitle}>{t('profile.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -80,24 +83,24 @@ export default function ProfileScreen({navigation}: Props) {
             </Text>
           </View>
           <TouchableOpacity style={styles.editAvatarButton}>
-            <Text style={styles.editAvatarText}>Cambiar foto</Text>
+            <Text style={styles.editAvatarText}>{t('profile.changePhoto')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* User Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información de Cuenta</Text>
+          <Text style={styles.sectionTitle}>{t('profile.account')}</Text>
           
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoLabel}>{t('profile.email')}</Text>
               <Text style={styles.infoValue}>{user?.email || 'N/A'}</Text>
             </View>
             
             <View style={styles.divider} />
             
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>ID de Usuario</Text>
+              <Text style={styles.infoLabel}>{t('profile.userId')}</Text>
               <Text style={[styles.infoValue, styles.monoText]} numberOfLines={1}>
                 {user?.id?.substring(0, 20) || 'N/A'}...
               </Text>
@@ -106,10 +109,10 @@ export default function ProfileScreen({navigation}: Props) {
             <View style={styles.divider} />
             
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Última Conexión</Text>
+              <Text style={styles.infoLabel}>{t('profile.lastSignIn')}</Text>
               <Text style={styles.infoValue}>
                 {user?.last_sign_in_at
-                  ? new Date(user.last_sign_in_at).toLocaleDateString('es-ES', {
+                  ? new Date(user.last_sign_in_at).toLocaleDateString(locale, {
                       day: '2-digit',
                       month: 'short',
                       hour: '2-digit',
@@ -123,42 +126,46 @@ export default function ProfileScreen({navigation}: Props) {
 
         {/* Payment Methods */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Métodos de pago</Text>
+          <Text style={styles.sectionTitle}>{t('profile.paymentMethods')}</Text>
 
           <TouchableOpacity
             style={styles.paymentMethodCard}
             onPress={() => navigation.navigate('PaymentMethods')}
             activeOpacity={0.7}>
             <Text style={styles.paymentMethodIcon}>💳</Text>
-            <Text style={styles.paymentMethodTitle}>Tarjetas</Text>
+            <Text style={styles.paymentMethodTitle}>{t('profile.cards')}</Text>
             <Text style={styles.paymentMethodSubtitle}>
-              Tu tarjeta se guarda en Reap y apruebas cada cargo de Reapli
+              {t('profile.cardsSubtitle')}
             </Text>
             <View style={styles.paymentMethodButton}>
-              <Text style={styles.paymentMethodButtonTextActive}>Ver métodos de pago →</Text>
+              <Text style={styles.paymentMethodButtonTextActive}>{t('profile.seePaymentMethods')}</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Configuración</Text>
+          <Text style={styles.sectionTitle}>{t('profile.settings')}</Text>
+          <View style={styles.languageSetting}>
+            <Text style={styles.settingText}>🌐 {t('common.language')}</Text>
+            <LanguageToggle />
+          </View>
           
           <TouchableOpacity style={styles.settingItem}>
             <Text style={styles.settingIcon}>🔔</Text>
-            <Text style={styles.settingText}>Notificaciones</Text>
+            <Text style={styles.settingText}>{t('profile.notifications')}</Text>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingItem}>
             <Text style={styles.settingIcon}>🔒</Text>
-            <Text style={styles.settingText}>Privacidad y Seguridad</Text>
+            <Text style={styles.settingText}>{t('profile.privacy')}</Text>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingItem}>
             <Text style={styles.settingIcon}>❓</Text>
-            <Text style={styles.settingText}>Ayuda y Soporte</Text>
+            <Text style={styles.settingText}>{t('profile.help')}</Text>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
         </View>
@@ -170,7 +177,7 @@ export default function ProfileScreen({navigation}: Props) {
             onPress={handleSignOut}
             disabled={loading}>
             <Text style={styles.signOutText}>
-              {loading ? 'Cerrando sesión...' : '🚪 Cerrar sesión'}
+              {loading ? t('profile.signingOut') : t('profile.signOut')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -183,6 +190,15 @@ export default function ProfileScreen({navigation}: Props) {
 }
 
 const styles = StyleSheet.create({
+  languageSetting: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
   container: {
     flex: 1,
     backgroundColor: '#0f172a',

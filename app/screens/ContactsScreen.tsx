@@ -14,10 +14,12 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../types/navigation';
 import {getContacts, deleteContact, toggleFavorite} from '../lib/contacts';
 import type {Contact} from '../types/contact';
+import {useI18n} from '../lib/i18n';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ContactsScreen() {
+  const {t} = useI18n();
   const navigation = useNavigation<NavigationProp>();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ export default function ContactsScreen() {
       setContacts(data);
     } catch (error: any) {
       console.error('Error loading contacts:', error);
-      Alert.alert('Error', 'No se pudieron cargar los contactos');
+      Alert.alert(t('common.error'), t('contacts.loadError'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -53,26 +55,26 @@ export default function ContactsScreen() {
       await toggleFavorite(contactId, !currentFavorite);
       loadContacts();
     } catch {
-      Alert.alert('Error', 'No se pudo actualizar el favorito');
+      Alert.alert(t('common.error'), t('contacts.favoriteError'));
     }
   };
 
   const handleDeleteContact = (contactId: string, contactName: string) => {
     Alert.alert(
-      'Eliminar Contacto',
-      `¿Estás seguro de que deseas eliminar a "${contactName}"?`,
+      t('contacts.deleteTitle'),
+      t('contacts.deleteConfirm', {name: contactName}),
       [
-        {text: 'Cancelar', style: 'cancel'},
+        {text: t('common.cancel'), style: 'cancel'},
         {
-          text: 'Eliminar',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteContact(contactId);
-              Alert.alert('Éxito', 'Contacto eliminado');
+              Alert.alert(t('common.success'), t('contacts.deleted'));
               loadContacts();
             } catch {
-              Alert.alert('Error', 'No se pudo eliminar el contacto');
+              Alert.alert(t('common.error'), t('contacts.deleteError'));
             }
           },
         },
@@ -92,8 +94,8 @@ export default function ContactsScreen() {
         </View>
         
         <Text style={styles.contactAddress} numberOfLines={1}>
-          {item.city ? `📍 ${item.city}, ${item.country}` : '📍 Sin dirección de envío'}
-          {item.spend_limit ? ` · tope ${item.spend_limit} ${item.currency}` : ''}
+          {item.city ? `📍 ${item.city}, ${item.country}` : t('contacts.noAddress')}
+          {item.spend_limit ? ` · ${t('contacts.cap', {amount: item.spend_limit, currency: item.currency})}` : ''}
         </Text>
         
         {item.nickname && (
@@ -129,14 +131,14 @@ export default function ContactsScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateIcon}>👥</Text>
-      <Text style={styles.emptyStateTitle}>No tienes contactos</Text>
+      <Text style={styles.emptyStateTitle}>{t('contacts.emptyTitle')}</Text>
       <Text style={styles.emptyStateText}>
-        Agrega a las personas para quienes Reapli puede comprar, con su dirección de envío
+        {t('contacts.emptyBody')}
       </Text>
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => navigation.navigate('AddContact')}>
-        <Text style={styles.addButtonText}>➕ Agregar Contacto</Text>
+        <Text style={styles.addButtonText}>{t('contacts.addContact')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -157,11 +159,11 @@ export default function ContactsScreen() {
           onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Mis Contactos</Text>
+        <Text style={styles.title}>{t('contacts.title')}</Text>
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => navigation.navigate('AddContact')}>
-          <Text style={styles.headerButtonText}>➕ Agregar</Text>
+          <Text style={styles.headerButtonText}>{t('contacts.add')}</Text>
         </TouchableOpacity>
       </View>
 

@@ -73,7 +73,7 @@ export interface Checkout {
 export interface PaymentMethod {
   id: string;
   status: string;
-  label: string;
+  label: string | null;
   actionUrl?: string;
 }
 

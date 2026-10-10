@@ -16,23 +16,16 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../types/navigation';
 import type {PaymentMethod, PaymentSetup, VaultInfo} from '../types/commerce';
 import {getPaymentSetup, startPaymentSetup} from '../lib/commerceApi';
+import {useI18n} from '../lib/i18n';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PaymentMethods'>;
 
-const CARD_STATUS: Record<string, {label: string; color: string}> = {
-  ACTIVE: {label: 'Activa', color: '#22c55e'},
-  REQUIRES_ACTION: {label: 'Falta completar', color: '#f59e0b'},
-  REVOKED: {label: 'Revocada', color: '#64748b'},
-  FAILED: {label: 'Falló', color: '#ef4444'},
-  EXPIRED: {label: 'Expiró', color: '#64748b'},
-};
-
-const VAULT_STATUS: Record<string, string> = {
-  READY: '✅ Lista para pagar',
-  FUNDS_NEEDED: '💧 Necesita fondos (USDC)',
-  PROCESSING: '⏳ Procesando depósito',
-  SETUP_NEEDED: '⚙️ Falta configurar con el skill de Kwal',
-  ERROR: '🛑 Requiere al operador',
+const CARD_STATUS_COLORS: Record<string, string> = {
+  ACTIVE: '#22c55e',
+  REQUIRES_ACTION: '#f59e0b',
+  REVOKED: '#64748b',
+  FAILED: '#ef4444',
+  EXPIRED: '#64748b',
 };
 
 /**
@@ -40,6 +33,7 @@ const VAULT_STATUS: Record<string, string> = {
  * Kwal: bóveda USDC en Ink Sepolia que respalda la tarjeta del agente.
  */
 export default function PaymentMethodsScreen({navigation}: Props) {
+  const {t} = useI18n();
   const [setup, setSetup] = useState<PaymentSetup | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -48,7 +42,7 @@ export default function PaymentMethodsScreen({navigation}: Props) {
     try {
       setSetup(await getPaymentSetup());
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setLoading(false);
     }
@@ -67,25 +61,28 @@ export default function PaymentMethodsScreen({navigation}: Props) {
       if (actionUrl) await Linking.openURL(actionUrl);
       await load();
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setCreating(false);
     }
   };
 
   const renderCard = (method: PaymentMethod) => {
-    const status = CARD_STATUS[method.status] || {label: method.status, color: '#64748b'};
+    const status = {
+      label: t(`payments.status.${method.status}`),
+      color: CARD_STATUS_COLORS[method.status] || '#64748b',
+    };
     return (
       <View key={method.id} style={styles.card}>
         <View style={styles.cardRow}>
-          <Text style={styles.cardTitle}>{method.label}</Text>
+          <Text style={styles.cardTitle}>{method.label || t('payments.cardInProgress')}</Text>
           <View style={[styles.badge, {backgroundColor: status.color}]}>
             <Text style={styles.badgeText}>{status.label}</Text>
           </View>
         </View>
         {method.actionUrl && (
           <TouchableOpacity style={styles.secondaryButton} onPress={() => Linking.openURL(method.actionUrl!)}>
-            <Text style={styles.buttonText}>Completar registro</Text>
+            <Text style={styles.buttonText}>{t('payments.completeSetup')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -94,8 +91,8 @@ export default function PaymentMethodsScreen({navigation}: Props) {
 
   const renderVault = (vault: VaultInfo) => (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Bóveda Kwal · {vault.chain || 'Ink Sepolia'}</Text>
-      <Text style={styles.cardSubtitle}>{VAULT_STATUS[vault.state] || vault.state}</Text>
+      <Text style={styles.cardTitle}>{t('payments.vault')} · {vault.chain || 'Ink Sepolia'}</Text>
+      <Text style={styles.cardSubtitle}>{t(`payments.vaultStatus.${vault.state}`)}</Text>
       {vault.available && (
         <Text style={styles.balance}>
           {vault.available.amount.toFixed(2)} {vault.available.currency}
@@ -109,17 +106,17 @@ export default function PaymentMethodsScreen({navigation}: Props) {
       <View style={styles.linksRow}>
         {vault.explorerUrl && (
           <TouchableOpacity onPress={() => Linking.openURL(vault.explorerUrl!)}>
-            <Text style={styles.link}>Ver en explorer</Text>
+            <Text style={styles.link}>{t('payments.explorer')}</Text>
           </TouchableOpacity>
         )}
         {vault.usdcFaucetUrl && (
           <TouchableOpacity onPress={() => Linking.openURL(vault.usdcFaucetUrl!)}>
-            <Text style={styles.link}>Faucet USDC</Text>
+            <Text style={styles.link}>{t('payments.usdcFaucet')}</Text>
           </TouchableOpacity>
         )}
         {vault.gasFaucetUrl && (
           <TouchableOpacity onPress={() => Linking.openURL(vault.gasFaucetUrl!)}>
-            <Text style={styles.link}>Faucet ETH</Text>
+            <Text style={styles.link}>{t('payments.ethFaucet')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -134,7 +131,7 @@ export default function PaymentMethodsScreen({navigation}: Props) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.headerTitle}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Métodos de pago</Text>
+        <Text style={styles.headerTitle}>{t('payments.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -145,12 +142,10 @@ export default function PaymentMethodsScreen({navigation}: Props) {
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={false} onRefresh={load} tintColor="#3b82f6" />}>
           <Text style={styles.info}>
-            {isReap
-              ? '🔐 Tu tarjeta se guarda en Reap. Reapli nunca ve sus datos y tú apruebas cada cargo.'
-              : '🔗 Reapli paga con una tarjeta respaldada por USDC en tu bóveda de Ink Sepolia. Tú controlas la wallet dueña.'}
+            {isReap ? t('payments.reapInfo') : t('payments.kwalInfo')}
           </Text>
           {isReap && setup?.methods.length === 0 && (
-            <Text style={styles.empty}>Aún no tienes tarjetas registradas.</Text>
+            <Text style={styles.empty}>{t('payments.empty')}</Text>
           )}
           {isReap && setup?.methods.map(renderCard)}
           {!isReap && setup?.vault && renderVault(setup.vault)}
@@ -162,7 +157,7 @@ export default function PaymentMethodsScreen({navigation}: Props) {
           style={[styles.primaryButton, creating && styles.buttonDisabled]}
           onPress={handleAddCard}
           disabled={creating}>
-          {creating ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.buttonText}>➕ Agregar tarjeta</Text>}
+          {creating ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.buttonText}>{t('payments.addCard')}</Text>}
         </TouchableOpacity>
       )}
     </SafeAreaView>

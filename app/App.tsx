@@ -7,6 +7,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {supabase} from './lib/supabase';
 import type {RootStackParamList} from './types/navigation';
+import {LanguageProvider, useI18n} from './lib/i18n';
 
 // Screens
 import LoginScreen from './screens/LoginScreen';
@@ -20,7 +21,8 @@ import PurchaseRequestsScreen from './screens/PurchaseRequestsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-function App() {
+function AppNavigator() {
+  const {t} = useI18n();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -124,8 +126,8 @@ function App() {
                 name="VerifyOTP"
                 component={VerifyOTPScreen}
                 options={{
-                  title: 'Verificación',
-                  headerBackTitle: 'Atrás',
+                  title: t('verify.navTitle'),
+                  headerBackTitle: t('verify.back'),
                 }}
               />
             </>
@@ -144,5 +146,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f172a',
   },
 });
+
+function App() {
+  return (
+    <LanguageProvider>
+      <AppNavigator />
+    </LanguageProvider>
+  );
+}
 
 export default App;

@@ -15,6 +15,7 @@ import type {Contact} from '../types/contact';
 import type {PurchaseRequest} from '../types/purchaseRequest';
 import type {PaymentProviderName} from '../types/commerce';
 import {config} from '../config';
+import {translate, type Language} from './i18n';
 
 const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
 
@@ -62,6 +63,22 @@ const functionDeclarations: FunctionDeclaration[] = [
     },
   },
   {
+    name: 'set_language',
+    description:
+      'Cambia el idioma de la app y de la conversación. Úsala cuando el usuario pida hablar en otro idioma ' +
+      '(ej: "speak English", "habla en español", "cambia a inglés").',
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        language: {
+          type: SchemaType.STRING,
+          description: 'Idioma destino: "es" para español o "en" para inglés',
+        },
+      },
+      required: ['language'],
+    },
+  },
+  {
     name: 'list_purchase_requests',
     description: 'Lista las solicitudes de compra del usuario y su estado.',
     parameters: {
@@ -87,6 +104,7 @@ export interface AIContext {
   hasPaymentMethod: boolean;
   provider?: PaymentProviderName;
   shippingCatalog: ShippingCatalog[];
+  language: Language;
 }
 
 const PROVIDER_DESCRIPTIONS: Record<PaymentProviderName, string> = {
@@ -143,9 +161,11 @@ Reglas:
 - Si el usuario pide comprar o mandar algo, llama create_purchase_request.
 - Si menciona atender o pagar lo que pidió un contacto, llama fulfill_purchase_request.
 - Si pregunta por sus pedidos o solicitudes, llama list_purchase_requests.
+- Si pide hablar en otro idioma (inglés o español), llama set_language.
 - Si lo que piden no está en las categorías que envían al país del contacto, dilo y sugiere algo que sí esté.
 - Fuera de alcance: viajes, apuestas, contenido para adultos y categorías restringidas.
-- Responde en español, breve y amigable.`;
+- Idioma actual de la conversación: ${context.language === 'en' ? 'inglés (English)' : 'español'}. Responde SIEMPRE en ese idioma, breve y amigable.
+- Al llamar create_purchase_request, escribe item_description en el idioma en que el usuario lo pidió.`;
 }
 
 /**
@@ -177,10 +197,6 @@ export async function processMessageWithAI(
     return {text: result.response.text()};
   } catch (error: any) {
     console.error('Error processing message with Gemini:', error?.message);
-    return {
-      text:
-        'No pude conectarme con el asistente. 🤔\n\n' +
-        'Intenta de nuevo en un momento, o usa los botones 📋 👥 💳 de arriba.',
-    };
+    return {text: translate(context.language, 'chat.connectionError')};
   }
 }

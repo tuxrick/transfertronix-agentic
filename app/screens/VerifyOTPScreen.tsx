@@ -11,12 +11,14 @@ import {
   Platform,
 } from 'react-native';
 import {supabase} from '../lib/supabase';
+import {useI18n} from '../lib/i18n';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'VerifyOTP'>;
 
 export default function VerifyOTPScreen({route, navigation}: Props) {
+  const {t} = useI18n();
   const {email} = route.params;
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,7 +26,7 @@ export default function VerifyOTPScreen({route, navigation}: Props) {
 
   const handleVerifyOTP = async () => {
     if (!otp || otp.trim().length === 0) {
-      Alert.alert('Error', 'Por favor ingresa el código que recibiste');
+      Alert.alert(t('common.error'), t('verify.enterCode'));
       return;
     }
 
@@ -39,10 +41,10 @@ export default function VerifyOTPScreen({route, navigation}: Props) {
       if (error) throw error;
 
       if (data.session) {
-        Alert.alert('¡Bienvenido!', 'Has iniciado sesión exitosamente');
+        Alert.alert(t('verify.welcomeTitle'), t('verify.welcomeBody'));
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Código inválido o expirado');
+      Alert.alert(t('common.error'), error.message || t('verify.invalidCode'));
       setOtp('');
     } finally {
       setLoading(false);
@@ -61,10 +63,10 @@ export default function VerifyOTPScreen({route, navigation}: Props) {
 
       if (error) throw error;
 
-      Alert.alert('¡Código reenviado!', 'Revisa tu correo electrónico');
+      Alert.alert(t('verify.resentTitle'), t('verify.resentBody'));
       setOtp('');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setResending(false);
     }
@@ -78,19 +80,17 @@ export default function VerifyOTPScreen({route, navigation}: Props) {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.logo}>📧</Text>
-          <Text style={styles.title}>Verificación</Text>
-          <Text style={styles.subtitle}>
-            Ingresa el código enviado a:
-          </Text>
+          <Text style={styles.title}>{t('verify.title')}</Text>
+          <Text style={styles.subtitle}>{t('verify.subtitle')}</Text>
           <Text style={styles.email}>{email}</Text>
         </View>
 
         {/* OTP Input - Campo único */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Código de verificación</Text>
+          <Text style={styles.label}>{t('verify.codeLabel')}</Text>
           <TextInput
             style={styles.otpInput}
-            placeholder="Ingresa el código"
+            placeholder={t('verify.codePlaceholder')}
             placeholderTextColor="#64748b"
             value={otp}
             onChangeText={setOtp}
@@ -102,9 +102,7 @@ export default function VerifyOTPScreen({route, navigation}: Props) {
             maxLength={50}
             multiline={false}
           />
-          <Text style={styles.hint}>
-            Copia y pega el código de tu correo electrónico
-          </Text>
+          <Text style={styles.hint}>{t('verify.hint')}</Text>
         </View>
 
         {/* Verify Button */}
@@ -116,7 +114,7 @@ export default function VerifyOTPScreen({route, navigation}: Props) {
           {loading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.buttonText}>Verificar código</Text>
+            <Text style={styles.buttonText}>{t('verify.verify')}</Text>
           )}
         </TouchableOpacity>
 
@@ -130,8 +128,8 @@ export default function VerifyOTPScreen({route, navigation}: Props) {
             <ActivityIndicator size="small" color="#60a5fa" />
           ) : (
             <Text style={styles.resendText}>
-              ¿No recibiste el código?{' '}
-              <Text style={styles.resendLink}>Reenviar</Text>
+              {t('verify.noCode')}{' '}
+              <Text style={styles.resendLink}>{t('verify.resend')}</Text>
             </Text>
           )}
         </TouchableOpacity>
@@ -141,12 +139,12 @@ export default function VerifyOTPScreen({route, navigation}: Props) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
           disabled={loading}>
-          <Text style={styles.backText}>← Cambiar correo</Text>
+          <Text style={styles.backText}>{t('verify.changeEmail')}</Text>
         </TouchableOpacity>
 
         {/* Info */}
         <View style={styles.infoBox}>
-          <Text style={styles.infoText}>💡 El código expira en 60 minutos</Text>
+          <Text style={styles.infoText}>{t('verify.expires')}</Text>
         </View>
       </View>
     </KeyboardAvoidingView>
