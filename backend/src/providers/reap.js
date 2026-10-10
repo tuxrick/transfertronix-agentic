@@ -58,14 +58,25 @@ async function searchProducts({ query, country, currency, maxPrice, merchantName
   };
 }
 
+const QUOTE_RETRY_ATTEMPTS = 3;
+const QUOTE_RETRY_DELAY_MS = 3000;
+
 async function createQuote({ variantId, quantity = 1, externalCheckout, email, shippingAddress }) {
-  const quote = await agentic.createQuote({
-    items: externalCheckout ? undefined : [{ variantId, quantity }],
-    externalCheckout,
-    email,
-    shippingAddress,
-  });
-  return normalizeQuote(quote);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const quote = await agentic.createQuote({
+        items: externalCheckout ? undefined : [{ variantId, quantity }],
+        externalCheckout,
+        email,
+        shippingAddress,
+      });
+      return normalizeQuote(quote);
+    } catch (error) {
+      // The sandbox answers 503 when the merchant call is busy; a new attempt can succeed.
+      if (error.code !== 'QUOTE_TEMPORARILY_UNAVAILABLE' || attempt >= QUOTE_RETRY_ATTEMPTS) throw error;
+      await new Promise(resolve => setTimeout(resolve, QUOTE_RETRY_DELAY_MS));
+    }
+  }
 }
 
 async function getQuote(id) {
