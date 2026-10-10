@@ -40,6 +40,15 @@
       var TITLES = {es: 'Transfertronix · Demo de Reapli', en: 'Transfertronix · Reapli demo'};
       function apply(lang) {
         document.getElementById('caption').innerHTML = TEXT[lang];
+        var video = document.querySelector('video');
+        var src = lang === 'en' ? '/video/transfertronix-demo-en.mp4' : '/video/transfertronix-demo.mp4';
+        if (video.getAttribute('data-src') !== src) {
+          video.setAttribute('data-src', src);
+          video.poster = lang === 'en' ? '/video/poster-en.jpg' : '/video/poster.jpg';
+          video.querySelector('source').src = src;
+          video.load();
+          video.play().catch(function () {});
+        }
         document.title = TITLES[lang];
         document.documentElement.lang = lang;
         document.querySelectorAll('.lang button').forEach(function (b) {

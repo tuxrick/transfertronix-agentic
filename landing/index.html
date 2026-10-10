@@ -224,7 +224,7 @@
           <li data-i18n="demo.s5"><span>5</span>Solicitudes del equipo</li>
           <li data-i18n="demo.s6"><span>6</span>Historial y trazabilidad</li>
         </ul>
-        <a class="btn btn-ghost" href="/demo" target="_blank" rel="noopener" data-i18n="demo.open">Abrir el video en pantalla completa ↗</a>
+        <a class="btn btn-ghost" href="/demo" target="_blank" rel="noopener" data-i18n="demo.open" id="demo-link">Abrir el video en pantalla completa ↗</a>
       </div>
       <div class="video-frame">
         <video controls playsinline preload="metadata" poster="video/poster.jpg">
@@ -410,6 +410,16 @@
         });
         document.documentElement.lang = lang;
         document.title = TITLES[lang];
+        var video = document.querySelector('#demo video');
+        if (video) {
+          var src = lang === 'en' ? 'video/transfertronix-demo-en.mp4' : 'video/transfertronix-demo.mp4';
+          if (video.getAttribute('data-src') !== src) {
+            video.setAttribute('data-src', src);
+            video.poster = lang === 'en' ? 'video/poster-en.jpg' : 'video/poster.jpg';
+            video.querySelector('source').src = src;
+            video.load();
+          }
+        }
         document.querySelectorAll('.lang button').forEach(function (b) {
           b.classList.toggle('active', b.getAttribute('data-lang') === lang);
         });
