@@ -1,26 +1,26 @@
 # Transfertronix · Agentic Hackathon
 
-Agente que compra para ti, tu familia o tu equipo **dentro de un tope de gasto**. Alguien pide algo, el agente busca en comercios compatibles y cotiza con envío, y quien paga confirma el cargo. Cada solicitud queda registrada, de la petición a la orden.
+**Reapli** es el agente de compras de Transfertronix: compra para ti, tu familia o tu equipo **dentro de un tope de gasto**. Alguien pide algo, Reapli busca en comercios compatibles y cotiza con envío, y quien paga confirma el cargo. Cada solicitud queda registrada, de la petición a la orden.
 
 Soporta los dos módulos del hackatón, intercambiables con una variable de entorno:
 
 | Proveedor | Cómo paga | Aprobación |
 |---|---|---|
 | **Reap Agentic Payments** (`PAYMENT_PROVIDER=reap`) | Tarjeta guardada una vez (enrollment) | El usuario aprueba cada cargo en la página hospedada de Reap |
-| **Kwal de Payward** (`PAYMENT_PROVIDER=kwal`) | Tarjeta del agente respaldada por USDC en una bóveda en Ink Sepolia | El usuario confirma en la app; la bóveda paga |
+| **Kwal de Payward** (`PAYMENT_PROVIDER=kwal`) | Tarjeta de Reapli respaldada por USDC en una bóveda en Ink Sepolia | El usuario confirma en la app; la bóveda paga |
 
 ## Casos de uso
 
 | Tema | Cómo se usa |
 |---|---|
-| Gasto empresarial | Un empleado solicita (teclado, hub USB-C, monitor, artículos de oficina), el agente cotiza contra su tope y el manager confirma |
+| Gasto empresarial | Un empleado solicita (teclado, hub USB-C, monitor, artículos de oficina), Reapli cotiza contra su tope y el manager confirma |
 | Vida diaria | Regalos y reabastecimiento para la familia con tope por contacto (café, libros, hogar) |
-| Stablecoins y economía de agentes | Con Kwal, la tesorería del equipo vive en una bóveda USDC y el agente gasta contra ella |
+| Stablecoins y economía de agentes | Con Kwal, la tesorería del equipo vive en una bóveda USDC y Reapli gasta contra ella |
 
 ## Estructura
 
 ```
-app/        React Native 0.82 (TypeScript): chat con Gemini, contactos, métodos de pago, solicitudes
+app/        React Native 0.82 (TypeScript): chat con Reapli (Gemini 3.8 Flash), contactos, métodos de pago, solicitudes
 backend/    Express 5: contrato de comercio normalizado sobre Reap o Kwal (las llaves viven solo aquí)
   src/providers/   adaptadores reap.js y kwal.js
   src/catalog/     lista de comercios compatibles (src/data/merchants.json)
@@ -30,7 +30,7 @@ supabase/   Migraciones SQL: profiles, contacts (dirección + tope), purchase_re
 ## Flujo
 
 ```
-Chat (Gemini function calling)
+Chat con Reapli (Gemini function calling)
   └─ create_purchase_request ─► Supabase purchase_requests (pending)
        └─ POST /api/commerce/products/search
             · búsqueda del proveedor; si no hay resultados (Reap), productos de prueba
@@ -47,7 +47,7 @@ Chat (Gemini function calling)
 ## Reglas del hackatón que respeta
 
 - **Solo sandbox:** el checkout es simulado y no se mueve dinero real.
-- **Solo comercios compatibles:** el backend rechaza cualquier carrito fuera de `backend/src/data/merchants.json`, y el agente solo ofrece categorías que envían al país del contacto.
+- **Solo comercios compatibles:** el backend rechaza cualquier carrito fuera de `backend/src/data/merchants.json`, y Reapli solo ofrece categorías que envían al país del contacto.
 - **Sin atajos:** no hay scraping de checkout ni datos de tarjeta en el LLM. La tarjeta se captura en la página de Reap o vive en Kwal.
 - **Fuera de alcance:** viajes y categorías restringidas.
 

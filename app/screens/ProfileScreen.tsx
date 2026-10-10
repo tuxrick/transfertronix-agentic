@@ -132,7 +132,7 @@ export default function ProfileScreen({navigation}: Props) {
             <Text style={styles.paymentMethodIcon}>💳</Text>
             <Text style={styles.paymentMethodTitle}>Tarjetas</Text>
             <Text style={styles.paymentMethodSubtitle}>
-              Tu tarjeta se guarda en Reap y apruebas cada cargo del agente
+              Tu tarjeta se guarda en Reap y apruebas cada cargo de Reapli
             </Text>
             <View style={styles.paymentMethodButton}>
               <Text style={styles.paymentMethodButtonTextActive}>Ver métodos de pago →</Text>

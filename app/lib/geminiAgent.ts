@@ -1,5 +1,5 @@
 /**
- * Gemini AI Agent with Function Calling
+ * Reapli: the Gemini shopping agent with Function Calling
  *
  * El agente interpreta lo que pide el usuario y decide qué acción tomar.
  * Nunca maneja datos de tarjeta ni cobra sin confirmación del usuario.
@@ -29,7 +29,7 @@ const functionDeclarations: FunctionDeclaration[] = [
       properties: {
         item_description: {
           type: SchemaType.STRING,
-          description: 'Qué se necesita, en términos de búsqueda de producto (ej: "pañales talla 3 paquete grande")',
+          description: 'Qué se necesita, en términos de búsqueda de producto (ej: "teclado inalámbrico low-profile")',
         },
         contact: {
           type: SchemaType.STRING,
@@ -91,7 +91,7 @@ export interface AIContext {
 
 const PROVIDER_DESCRIPTIONS: Record<PaymentProviderName, string> = {
   reap: 'Reap Agentic Payments: el usuario aprueba cada cargo en una página segura de Reap',
-  kwal: 'Kwal: la tarjeta del agente está respaldada por USDC en la bóveda del usuario (Ink Sepolia)',
+  kwal: 'Kwal: la tarjeta de Reapli está respaldada por USDC en la bóveda del usuario (Ink Sepolia)',
 };
 
 export interface FunctionCall {
@@ -123,7 +123,8 @@ function buildSystemPrompt(context: AIContext): string {
     .map(c => `- Envíos a ${c.country}: ${c.categories.join(', ')}`)
     .join('\n');
 
-  return `Eres Transfertronix, un agente que compra cosas por el usuario y para sus contactos (familia, equipo o amigos).
+  return `Eres Reapli, el agente de compras de la app Transfertronix. Compras cosas por el usuario y para sus contactos (familia, equipo o amigos).
+Tu nombre es Reapli; si te preguntan quién eres, preséntate así.
 Pagos: ${context.provider ? PROVIDER_DESCRIPTIONS[context.provider] : 'no disponible'}.
 Tú buscas y cotizas; el usuario confirma cada compra. Nunca pidas ni manejes datos de tarjeta.
 

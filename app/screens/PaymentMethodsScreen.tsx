@@ -146,8 +146,8 @@ export default function PaymentMethodsScreen({navigation}: Props) {
           refreshControl={<RefreshControl refreshing={false} onRefresh={load} tintColor="#3b82f6" />}>
           <Text style={styles.info}>
             {isReap
-              ? '🔐 Tu tarjeta se guarda en Reap. El agente nunca ve sus datos y tú apruebas cada cargo.'
-              : '🔗 El agente paga con una tarjeta respaldada por USDC en tu bóveda de Ink Sepolia. Tú controlas la wallet dueña.'}
+              ? '🔐 Tu tarjeta se guarda en Reap. Reapli nunca ve sus datos y tú apruebas cada cargo.'
+              : '🔗 Reapli paga con una tarjeta respaldada por USDC en tu bóveda de Ink Sepolia. Tú controlas la wallet dueña.'}
           </Text>
           {isReap && setup?.methods.length === 0 && (
             <Text style={styles.empty}>Aún no tienes tarjetas registradas.</Text>

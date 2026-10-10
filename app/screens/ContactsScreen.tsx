@@ -131,7 +131,7 @@ export default function ContactsScreen() {
       <Text style={styles.emptyStateIcon}>👥</Text>
       <Text style={styles.emptyStateTitle}>No tienes contactos</Text>
       <Text style={styles.emptyStateText}>
-        Agrega a las personas para quienes el agente puede comprar, con su dirección de envío
+        Agrega a las personas para quienes Reapli puede comprar, con su dirección de envío
       </Text>
       <TouchableOpacity
         style={styles.addButton}

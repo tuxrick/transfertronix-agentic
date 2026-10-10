@@ -212,7 +212,7 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
             <Text style={styles.emptyIcon}>🛒</Text>
             <Text style={styles.emptyTitle}>{tab === 'completed' ? 'Aún no hay compras' : 'Sin solicitudes'}</Text>
             <Text style={styles.emptySubtitle}>
-              Pídele algo al agente en el chat, por ejemplo: "Mándale pañales a mamá"
+              Pídele algo a Reapli en el chat, por ejemplo: "Mándale café a papá"
             </Text>
           </View>
         }

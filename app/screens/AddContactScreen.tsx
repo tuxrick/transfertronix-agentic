@@ -39,9 +39,9 @@ const SECTIONS: {title?: string; fields: FieldConfig[]}[] = [
       {key: 'name', label: 'Nombre completo *', placeholder: 'Ej: María López', autoCapitalize: 'words'},
       {
         key: 'nickname',
-        label: 'Nickname para el agente',
+        label: 'Nickname para Reapli',
         placeholder: 'Ej: mamá, abuela, equipo diseño',
-        hint: 'Úsalo en el chat: "mándale pañales a mamá"',
+        hint: 'Úsalo en el chat: "mándale café a papá"',
         autoCapitalize: 'none',
       },
       {key: 'email', label: 'Email', placeholder: 'maria@ejemplo.com', keyboardType: 'email-address', autoCapitalize: 'none'},
@@ -72,7 +72,7 @@ const SECTIONS: {title?: string; fields: FieldConfig[]}[] = [
         key: 'spend_limit',
         label: 'Tope por compra',
         placeholder: '500',
-        hint: 'El agente no podrá cobrar más que esto para este contacto',
+        hint: 'Reapli no podrá cobrar más que esto para este contacto',
         keyboardType: 'decimal-pad',
       },
       {key: 'currency', label: 'Moneda', placeholder: 'MXN', autoCapitalize: 'characters'},
@@ -174,7 +174,7 @@ export default function AddContactScreen() {
         <View style={styles.infoBox}>
           <Text style={styles.infoIcon}>💡</Text>
           <Text style={styles.infoText}>
-            El agente usa la dirección para cotizar envíos y respeta el tope por compra al cobrar.
+            Reapli usa la dirección para cotizar envíos y respeta el tope por compra al cobrar.
           </Text>
         </View>
 

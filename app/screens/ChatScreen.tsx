@@ -88,7 +88,7 @@ function welcomeMessage(): Message {
   return {
     id: 'welcome',
     text:
-      '¡Hola! Soy Transfertronix 🤖\n\n' +
+      '¡Hola! Soy Reapli 🤖, tu agente de compras en Transfertronix.\n\n' +
       'Compro lo que tú, tu familia o tu equipo necesiten, dentro del tope que definas, y tú confirmas cada cargo.\n\n' +
       'Ejemplos:\n' +
       '⌨️ "Ana necesita un teclado inalámbrico, máximo 80 dólares"\n' +
@@ -190,7 +190,7 @@ export default function ChatScreen({navigation}: Props) {
   }, []);
 
   const confirmClearHistory = () => {
-    Alert.alert('Borrar historial', '¿Borrar toda la conversación con el agente?', [
+    Alert.alert('Borrar historial', '¿Borrar toda la conversación con Reapli?', [
       {text: 'Cancelar', style: 'cancel'},
       {
         text: 'Borrar',
@@ -522,8 +522,8 @@ export default function ChatScreen({navigation}: Props) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerLeft} onLongPress={confirmClearHistory} activeOpacity={0.8}>
-          <Text style={styles.headerTitle}>Transfertronix</Text>
-          <Text style={styles.headerSubtitle}>{processing ? '🤖 Procesando...' : 'Agente de compras'}</Text>
+          <Text style={styles.headerTitle}>Reapli</Text>
+          <Text style={styles.headerSubtitle}>{processing ? '🤖 Reapli está pensando...' : 'Agente de compras · Transfertronix'}</Text>
         </TouchableOpacity>
         <View style={styles.headerRight}>
           <View style={styles.statusIndicator}>
@@ -560,7 +560,7 @@ export default function ChatScreen({navigation}: Props) {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder="Ej: Ana necesita un teclado, máximo 60 USD"
+              placeholder="Ej: Ana necesita un teclado, máximo 80 USD"
               placeholderTextColor="#64748b"
               value={inputText}
               onChangeText={setInputText}
