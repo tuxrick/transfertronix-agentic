@@ -9,8 +9,9 @@ const { config } = require('../config');
 
 class KwalError extends Error {
   constructor(status, body, path) {
-    const code = body?.code || body?.error?.code || 'KWAL_ERROR';
-    super(body?.message || body?.error?.message || `Kwal respondió ${status} en ${path}`);
+    const reason = body?.data?.reason?.replace(/^PARTICIPANT_[A-Z_]*?_REASON_/, '');
+    const code = reason || body?.title || body?.code || body?.error?.code || 'KWAL_ERROR';
+    super(body?.message || body?.error?.message || `Kwal respondió ${status} en ${path}: ${reason || body?.title || 'error'}`);
     this.name = 'KwalError';
     this.status = status >= 500 ? 502 : status;
     this.code = code;

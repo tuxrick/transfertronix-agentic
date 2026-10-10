@@ -76,14 +76,31 @@ async function searchProducts({ query, limit = 10 }) {
   };
 }
 
+const MAX_VARIANT_ATTEMPTS = 6;
+
+// Products with options (size, color...) need one choice per option. Combinations are tried
+// in order until the provider resolves a purchasable variant.
 async function resolveVariant(productId) {
-  const variant = await kwalRequest('POST', `/products/${encodeURIComponent(productId)}/variant`, {
-    body: { optionIds: [] },
-  });
-  if (!variant?.purchasable) {
-    throw httpError(422, 'VARIANT_NOT_PURCHASABLE', 'Ese producto necesita elegir opciones (talla, color...)');
+  const path = `/products/${encodeURIComponent(productId)}`;
+  const detail = await kwalRequest('GET', path);
+  const options = (detail?.options || []).map(o => (o.values || []).filter(v => v.available !== false));
+
+  const combinations = [[]];
+  for (const values of options) {
+    const next = [];
+    combinations.forEach(combo => values.forEach(v => next.push([...combo, v.optionId])));
+    combinations.splice(0, combinations.length, ...next.slice(0, MAX_VARIANT_ATTEMPTS));
   }
-  return variant.variantId;
+
+  for (const optionIds of combinations) {
+    try {
+      const variant = await kwalRequest('POST', `${path}/variant`, { body: { optionIds } });
+      if (variant?.purchasable) return variant.variantId;
+    } catch (error) {
+      if (error.status !== 400) throw error;
+    }
+  }
+  throw httpError(422, 'VARIANT_NOT_PURCHASABLE', 'Ese producto no tiene una variante disponible para comprar');
 }
 
 async function createQuote({ productId, variantId, quantity = 1, externalCheckout, email, shippingAddress }) {
@@ -95,10 +112,25 @@ async function createQuote({ productId, variantId, quantity = 1, externalCheckou
     body: {
       email,
       lines: [{ variantId: resolvedVariantId, quantity }],
-      ...(shippingAddress && { shippingAddress }),
+      ...(shippingAddress && { shippingAddress: toKwalAddress(shippingAddress) }),
     },
   });
-  return normalizeQuote(quote);
+  return normalizeQuote(await ensureShippingSelected(quote));
+}
+
+// Kwal names the street fields line1/line2 instead of addressLine1/addressLine2.
+function toKwalAddress({ addressLine1, addressLine2, ...rest }) {
+  return { ...rest, line1: addressLine1, ...(addressLine2 && { line2: addressLine2 }) };
+}
+
+// Checkout refuses a quote without a shipping choice, so the cheapest option is preselected.
+async function ensureShippingSelected(quote) {
+  const options = quote.shippingOptions || [];
+  if (quote.selectedShippingOptionId || options.length === 0) return quote;
+  const cheapest = [...options].sort((a, b) => (toMoney(a.price)?.amount ?? 0) - (toMoney(b.price)?.amount ?? 0))[0];
+  return kwalRequest('POST', `/quotes/${encodeURIComponent(quote.quoteId)}/shipping`, {
+    body: { shippingOptionId: cheapest.shippingOptionId },
+  });
 }
 
 async function getQuote(id) {
