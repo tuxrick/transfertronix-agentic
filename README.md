@@ -51,7 +51,7 @@ Chat (Gemini function calling)
 - **Sin atajos:** no hay scraping de checkout ni datos de tarjeta en el LLM. La tarjeta se captura en la página de Reap o vive en Kwal.
 - **Fuera de alcance:** viajes y categorías restringidas.
 
-> Ojo con el envío: de los 152 comercios, solo 3 son de México (acteck.com, balamrush.com y blendstation.com.mx). Hay 74 que envían a MX, sobre todo electrónica, café, papelería y moda. Nada de abarrotes ni artículos de bebé envía a MX.
+> Ojo con el envío: de los 152 comercios, solo 3 son de México (acteck.com, balamrush.com y blendstation.com.mx). Hay 74 que envían a MX, sobre todo electrónica, café, papelería y moda; varios lo hacen solo por la regla `*` (resto del mundo). No hay comercios de bebé ni de salud que envíen a MX, y en abarrotes solo hay 3 internacionales.
 
 ## Configuración
 
