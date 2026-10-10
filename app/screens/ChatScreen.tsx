@@ -31,6 +31,7 @@ import {
   startCheckout,
   syncCheckout,
 } from '../lib/purchaseRequests';
+import {clearChatHistory, loadChatHistory, saveChatMessage} from '../lib/chatHistory';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -83,22 +84,34 @@ function formatQuote(quote: Quote) {
   return lines.join('\n');
 }
 
+function welcomeMessage(): Message {
+  return {
+    id: 'welcome',
+    text:
+      '¡Hola! Soy Transfertronix 🤖\n\n' +
+      'Compro lo que tú, tu familia o tu equipo necesiten, dentro del tope que definas, y tú confirmas cada cargo.\n\n' +
+      'Ejemplos:\n' +
+      '⌨️ "Ana necesita un teclado inalámbrico, máximo 80 dólares"\n' +
+      '☕ "Mándale café de especialidad a mi papá"\n' +
+      '📦 "Atiende lo que pidió Olivia"\n' +
+      '📋 "¿Cómo van mis pedidos?"',
+    sender: 'ai',
+    timestamp: new Date(),
+  };
+}
+
+// Gemini needs the history to start with a user turn and only carries text.
+function toGeminiHistory(stored: {sender: 'user' | 'ai'; text: string}[]): Content[] {
+  const turns = stored.slice(-MAX_HISTORY_TURNS * 2).map(m => ({
+    role: m.sender === 'user' ? 'user' : 'model',
+    parts: [{text: m.text}],
+  }));
+  const firstUser = turns.findIndex(t => t.role === 'user');
+  return firstUser === -1 ? [] : turns.slice(firstUser);
+}
+
 export default function ChatScreen({navigation}: Props) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text:
-        '¡Hola! Soy Transfertronix 🤖\n\n' +
-        'Compro lo que tú, tu familia o tu equipo necesiten, dentro del tope que definas, y tú confirmas cada cargo.\n\n' +
-        'Ejemplos:\n' +
-        '⌨️ "Ana necesita un teclado inalámbrico, máximo 60 dólares"\n' +
-        '☕ "Mándale café de especialidad a mi papá"\n' +
-        '📦 "Atiende lo que pidió Olivia"\n' +
-        '📋 "¿Cómo van mis pedidos?"',
-      sender: 'ai',
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage()]);
   const [inputText, setInputText] = useState('');
   const [processing, setProcessing] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -159,9 +172,41 @@ export default function ChatScreen({navigation}: Props) {
         ...prev,
         {id: `${Date.now()}-${Math.random()}`, text, sender, timestamp: new Date(), actions: options.actions},
       ]);
+      // Quick status lines (skipDelay) are transient; the rest is kept as history.
+      if (!options.skipDelay) saveChatMessage(sender, text);
     },
     [],
   );
+
+  useEffect(() => {
+    loadChatHistory().then(stored => {
+      if (stored.length === 0) return;
+      historyRef.current = toGeminiHistory(stored);
+      setMessages([
+        welcomeMessage(),
+        ...stored.map(m => ({id: m.id, text: m.text, sender: m.sender, timestamp: new Date(m.created_at)})),
+      ]);
+    });
+  }, []);
+
+  const confirmClearHistory = () => {
+    Alert.alert('Borrar historial', '¿Borrar toda la conversación con el agente?', [
+      {text: 'Cancelar', style: 'cancel'},
+      {
+        text: 'Borrar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await clearChatHistory();
+            historyRef.current = [];
+            setMessages([welcomeMessage()]);
+          } catch (error: any) {
+            Alert.alert('Error', error.message);
+          }
+        },
+      },
+    ]);
+  };
 
   const reportError = useCallback(
     async (error: unknown) => {
@@ -467,10 +512,10 @@ export default function ChatScreen({navigation}: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
+        <TouchableOpacity style={styles.headerLeft} onLongPress={confirmClearHistory} activeOpacity={0.8}>
           <Text style={styles.headerTitle}>Transfertronix</Text>
           <Text style={styles.headerSubtitle}>{processing ? '🤖 Procesando...' : 'Agente de compras'}</Text>
-        </View>
+        </TouchableOpacity>
         <View style={styles.headerRight}>
           <View style={styles.statusIndicator}>
             <View style={[styles.onlineDot, processing && styles.processingDot]} />

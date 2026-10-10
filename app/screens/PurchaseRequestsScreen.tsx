@@ -29,9 +29,33 @@ const STATUS_STYLES: Record<PurchaseRequestStatus, {label: string; color: string
 
 const CANCELLABLE: PurchaseRequestStatus[] = ['pending', 'quoted'];
 
+type Tab = 'open' | 'completed' | 'all';
+
+const TABS: {key: Tab; label: string}[] = [
+  {key: 'open', label: 'Abiertas'},
+  {key: 'completed', label: 'Compradas'},
+  {key: 'all', label: 'Todas'},
+];
+
+const TAB_FILTERS: Record<Tab, (r: PurchaseRequest) => boolean> = {
+  open: r => ['pending', 'quoted', 'awaiting_approval'].includes(r.status),
+  completed: r => r.status === 'completed',
+  all: () => true,
+};
+
+function formatDate(value?: string) {
+  if (!value) return '';
+  return new Date(value).toLocaleString('es-MX', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'});
+}
+
 export default function PurchaseRequestsScreen({navigation}: Props) {
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [tab, setTab] = useState<Tab>('open');
+  const visible = requests.filter(TAB_FILTERS[tab]);
+  const totalSpent = requests
+    .filter(TAB_FILTERS.completed)
+    .reduce((sum, r) => sum + Number(r.final_amount ?? r.quoted_amount ?? 0), 0);
 
   const loadRequests = useCallback(async () => {
     try {
@@ -111,9 +135,16 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
         {item.order_id && (
           <View style={styles.requestDetails}>
             <Text style={styles.requestDetailLabel}>Orden</Text>
-            <Text style={styles.requestDetailValue}>{item.order_id}</Text>
+            <Text style={styles.requestDetailValue}>
+              {item.order_id}
+              {item.product_snapshot?.demo ? ' (simulada)' : ''}
+            </Text>
           </View>
         )}
+        <View style={styles.requestDetails}>
+          <Text style={styles.requestDetailLabel}>{item.status === 'completed' ? 'Comprada' : 'Solicitada'}</Text>
+          <Text style={styles.requestDetailValue}>{formatDate(item.completed_at || item.created_at)}</Text>
+        </View>
         {item.max_amount && item.status !== 'completed' && (
           <View style={styles.requestDetails}>
             <Text style={styles.requestDetailLabel}>Tope</Text>
@@ -150,12 +181,28 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Solicitudes de compra</Text>
+        <Text style={styles.headerTitle}>Historial de compras</Text>
         <View style={styles.headerSpacer} />
       </View>
 
+      <View style={styles.tabs}>
+        {TABS.map(t => (
+          <TouchableOpacity
+            key={t.key}
+            style={[styles.tab, tab === t.key && styles.tabActive]}
+            onPress={() => setTab(t.key)}>
+            <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>
+              {t.label} ({requests.filter(TAB_FILTERS[t.key]).length})
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {tab === 'completed' && totalSpent > 0 && (
+        <Text style={styles.totalSpent}>Total comprado: {totalSpent.toFixed(2)} USD</Text>
+      )}
+
       <FlatList
-        data={requests}
+        data={visible}
         renderItem={renderRequest}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
@@ -163,7 +210,7 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🛒</Text>
-            <Text style={styles.emptyTitle}>Sin solicitudes</Text>
+            <Text style={styles.emptyTitle}>{tab === 'completed' ? 'Aún no hay compras' : 'Sin solicitudes'}</Text>
             <Text style={styles.emptySubtitle}>
               Pídele algo al agente en el chat, por ejemplo: "Mándale pañales a mamá"
             </Text>
@@ -175,9 +222,40 @@ export default function PurchaseRequestsScreen({navigation}: Props) {
 }
 
 const styles = StyleSheet.create({
+  tabs: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#1e293b',
+    alignItems: 'center',
+  },
+  tabActive: {
+    backgroundColor: '#3b82f6',
+  },
+  tabText: {
+    color: '#94a3b8',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#ffffff',
+  },
+  totalSpent: {
+    color: '#22c55e',
+    fontSize: 14,
+    fontWeight: '600',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#0f172a',
   },
   header: {
     flexDirection: 'row',

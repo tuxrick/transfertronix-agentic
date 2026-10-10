@@ -13,7 +13,7 @@ const { Client } = require('pg');
 
 const ROOT = path.join(__dirname, '../..');
 const REQUIRED = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_DB_URL'];
-const EXPECTED_TABLES = ['profiles', 'user_sessions', 'contacts', 'purchase_requests'];
+const EXPECTED_TABLES = ['profiles', 'user_sessions', 'contacts', 'purchase_requests', 'chat_messages'];
 
 function updateAppConfig(url, anonKey) {
   const configPath = path.join(ROOT, 'app/config.ts');
