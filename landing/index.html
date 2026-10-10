@@ -112,9 +112,9 @@
     .case blockquote { margin-top: auto; font-size: 14px; color: #cbd5e1; background: rgba(15,23,42,0.7); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 8px; }
 
     /* Screens */
-    .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+    .screens { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
     .screen { text-align: center; }
-    .screen .phone { max-width: 260px; }
+    .screen .phone { max-width: 240px; }
     .screen h3 { font-size: 16px; margin-top: 20px; }
     .screen p { font-size: 14px; color: var(--muted); max-width: 260px; margin: 6px auto 0; }
 
@@ -135,12 +135,13 @@
       nav ul { display: none; }
       .hero .wrap, .guard { grid-template-columns: 1fr; }
       .hero { padding-top: 56px; }
-      .problem, .cases, .screens, .stack { grid-template-columns: 1fr; }
+      .problem, .cases, .stack { grid-template-columns: 1fr; }
+      .screens { grid-template-columns: 1fr 1fr; }
       .steps { grid-template-columns: 1fr 1fr; }
       section { padding: 64px 0; }
     }
     @media (max-width: 520px) {
-      .steps { grid-template-columns: 1fr; }
+      .steps, .screens { grid-template-columns: 1fr; }
       .wrap { padding: 0 16px; }
     }
   </style>
@@ -266,8 +267,9 @@
       <p class="section-lead">App móvil en React Native: inicias sesión con un código por correo, das de alta a tus personas una vez y luego todo pasa en el chat.</p>
       <div class="screens">
         <div class="screen"><div class="phone"><img src="img/chat.jpg" alt="Pantalla de chat"></div><h3>Chat con el agente</h3><p>Pides en lenguaje natural; las opciones aparecen como botones y cada compra se confirma con su desglose.</p></div>
-        <div class="screen"><div class="phone"><img src="img/contact.jpg" alt="Formulario de contacto con dirección y tope"></div><h3>Personas con dirección y tope</h3><p>Nickname para el agente, dirección de envío y tope por compra en su moneda.</p></div>
-        <div class="screen"><div class="phone"><img src="img/payment.jpg" alt="Métodos de pago"></div><h3>Tarjeta segura en Reap</h3><p>Registras la tarjeta en la página de Reap; la app nunca ve el número.</p></div>
+        <div class="screen"><div class="phone"><img src="img/contacts.jpg" alt="Lista de contactos con ciudad y tope"></div><h3>Cada persona con su tope</h3><p>Ciudad de envío, tope por compra y un nickname para pedirle al agente "mándale café a papá".</p></div>
+        <div class="screen"><div class="phone"><img src="img/requests.jpg" alt="Solicitudes de compra"></div><h3>Solicitudes trazables</h3><p>Lo que piden tus personas queda registrado con su tope y estado, de pendiente a comprada.</p></div>
+        <div class="screen"><div class="phone"><img src="img/contact.jpg" alt="Formulario de contacto"></div><h3>Alta en un minuto</h3><p>Dirección de envío y presupuesto por persona; el agente los usa para cotizar y cobrar.</p></div>
       </div>
     </div>
   </section>
