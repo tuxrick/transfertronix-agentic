@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transfertronix · Agente de compras con presupuesto</title>
+  <meta name="description" content="Un agente de IA que compra para tu equipo o tu familia dentro de un tope de gasto, con pagos seguros vía Reap Agentic Payments.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --bg-soft: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.14);
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+    /* Nav */
+    nav { position: sticky; top: 0; z-index: 10; background: rgba(11, 17, 32, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(51, 65, 85, 0.5); }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .logo { font-weight: 800; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+    .logo span { color: var(--accent); }
+    nav ul { display: flex; gap: 28px; list-style: none; font-size: 14px; color: var(--muted); }
+    nav ul a:hover { color: var(--text); }
+
+    /* Hero */
+    .hero { padding: 88px 0 72px; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: -40% -10% auto auto; width: 720px; height: 720px; background: radial-gradient(circle, rgba(59,130,246,0.22), transparent 60%); pointer-events: none; }
+    .hero .wrap { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 56px; align-items: center; position: relative; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #93c5fd; background: var(--accent-soft); border: 1px solid rgba(59,130,246,0.35); padding: 6px 12px; border-radius: 999px; margin-bottom: 22px; }
+    h1 { font-size: clamp(36px, 5.4vw, 60px); line-height: 1.05; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 20px; }
+    h1 em { font-style: normal; background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lead { font-size: 19px; color: var(--muted); max-width: 560px; margin-bottom: 32px; }
+    .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 12px; font-weight: 600; font-size: 15px; transition: transform .15s, background .15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-ghost { border: 1px solid var(--border); color: var(--text); }
+    .hero-stats { display: flex; gap: 28px; margin-top: 36px; flex-wrap: wrap; }
+    .hero-stats div { font-size: 13px; color: var(--dim); }
+    .hero-stats strong { display: block; font-size: 22px; color: var(--text); font-weight: 700; }
+
+    .phone { width: 100%; max-width: 320px; margin: 0 auto; border-radius: 40px; padding: 10px; background: linear-gradient(160deg, #334155, #0f172a); box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(148,163,184,0.15); }
+    .phone img { width: 100%; display: block; border-radius: 32px; }
+
+    /* Sections */
+    section { padding: 88px 0; }
+    section.alt { background: var(--bg-soft); border-top: 1px solid rgba(51,65,85,0.5); border-bottom: 1px solid rgba(51,65,85,0.5); }
+    .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    h2 { font-size: clamp(28px, 3.6vw, 40px); line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 16px; }
+    .section-lead { color: var(--muted); font-size: 17px; max-width: 640px; margin-bottom: 48px; }
+
+    /* Problem */
+    .problem { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .pain { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+    .pain .icon { font-size: 26px; margin-bottom: 12px; }
+    .pain h3 { font-size: 17px; margin-bottom: 8px; }
+    .pain p { color: var(--muted); font-size: 15px; }
+
+    /* Steps */
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; counter-reset: step; }
+    .step { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; }
+    .step::before { counter-increment: step; content: counter(step); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft); color: #93c5fd; font-weight: 700; margin-bottom: 16px; }
+    .step h3 { font-size: 16px; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: var(--muted); }
+    .step code { font-size: 12px; background: rgba(148,163,184,0.12); padding: 2px 6px; border-radius: 6px; color: #cbd5e1; }
+
+    /* Guard rails */
+    .guard { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    .checks { list-style: none; display: grid; gap: 14px; }
+    .checks li { display: flex; gap: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+    .checks .dot { flex: none; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 14px; background: rgba(34,197,94,0.15); color: var(--ok); font-weight: 700; }
+    .checks strong { display: block; font-size: 15px; }
+    .checks span { font-size: 14px; color: var(--muted); }
+    .chat-demo { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; display: grid; gap: 12px; font-size: 14px; }
+    .msg { padding: 12px 14px; border-radius: 14px; max-width: 88%; }
+    .msg.user { justify-self: end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+    .msg.ai { background: #0f172a; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .msg.block { border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.08); }
+    .msg .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; margin-top: 8px; }
+    .tag.ok { background: rgba(34,197,94,0.15); color: var(--ok); }
+    .tag.no { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    /* Use cases */
+    .cases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .case { background: linear-gradient(180deg, var(--card), rgba(30,41,59,0.6)); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; display: flex; flex-direction: column; }
+    .case .icon { font-size: 30px; margin-bottom: 14px; }
+    .case h3 { font-size: 19px; margin-bottom: 4px; }
+    .case .who { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
+    .case p { color: var(--muted); font-size: 15px; margin-bottom: 16px; }
+    .case blockquote { margin-top: auto; font-size: 14px; color: #cbd5e1; background: rgba(15,23,42,0.7); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 8px; }
+
+    /* Screens */
+    .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+    .screen { text-align: center; }
+    .screen .phone { max-width: 260px; }
+    .screen h3 { font-size: 16px; margin-top: 20px; }
+    .screen p { font-size: 14px; color: var(--muted); max-width: 260px; margin: 6px auto 0; }
+
+    /* Stack */
+    .stack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .tech { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .tech h3 { font-size: 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .tech p { font-size: 14px; color: var(--muted); }
+    .flow { margin-top: 32px; background: #020617; border: 1px solid var(--border); border-radius: 14px; padding: 22px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #cbd5e1; overflow-x: auto; white-space: pre; line-height: 1.7; }
+    .flow b { color: #93c5fd; font-weight: 600; }
+    .flow i { color: var(--ok); font-style: normal; }
+    .flow u { color: var(--danger); text-decoration: none; }
+
+    footer { padding: 48px 0; border-top: 1px solid rgba(51,65,85,0.5); color: var(--dim); font-size: 14px; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+    @media (max-width: 900px) {
+      nav ul { display: none; }
+      .hero .wrap, .guard { grid-template-columns: 1fr; }
+      .hero { padding-top: 56px; }
+      .problem, .cases, .screens, .stack { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr 1fr; }
+      section { padding: 64px 0; }
+    }
+    @media (max-width: 520px) {
+      .steps { grid-template-columns: 1fr; }
+      .wrap { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a href="#" class="logo">⚡ <b>Transfer<span>tronix</span></b></a>
+      <ul>
+        <li><a href="#como-funciona">Cómo funciona</a></li>
+        <li><a href="#control">Control de gasto</a></li>
+        <li><a href="#casos">Casos de uso</a></li>
+        <li><a href="#app">La app</a></li>
+        <li><a href="#tecnologia">Tecnología</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <div>
+        <div class="badge">🤖 Agentic Hackathon · Reap × AI Builders MX</div>
+        <h1>Un agente que compra por tu equipo <em>sin salirse del presupuesto</em></h1>
+        <p class="lead">Pídele en lenguaje natural lo que alguien necesita. Transfertronix busca en comercios compatibles, cotiza con envío real y paga con Reap Agentic Payments, siempre dentro del tope que definiste y sin tocar nunca tu tarjeta.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#como-funciona">Ver cómo funciona →</a>
+          <a class="btn btn-ghost" href="#casos">Casos de uso</a>
+        </div>
+        <div class="hero-stats">
+          <div><strong>152</strong>comercios compatibles</div>
+          <div><strong>100%</strong>topes validados en servidor</div>
+          <div><strong>0</strong>datos de tarjeta en el LLM</div>
+        </div>
+      </div>
+      <div class="phone"><img src="img/chat.jpg" alt="Chat de Transfertronix con ejemplos de solicitudes de compra"></div>
+    </div>
+  </header>
+
+  <section class="alt">
+    <div class="wrap">
+      <div class="eyebrow">El problema</div>
+      <h2>Darle una tarjeta a una IA da miedo. Comprar a mano, también.</h2>
+      <p class="section-lead">Hoy las compras pequeñas de un equipo o una familia viven entre WhatsApp, tarjetas personales y hojas de cálculo. Y los agentes de compra que existen solo buscan y compran, sin ningún control.</p>
+      <div class="problem">
+        <div class="pain"><div class="icon">💬</div><h3>Pedidos dispersos</h3><p>"¿Me compras un teclado?" llega por chat, alguien lo busca, otro paga y nadie sabe qué se aprobó.</p></div>
+        <div class="pain"><div class="icon">💳</div><h3>Riesgo con la tarjeta</h3><p>Compartir la tarjeta o dársela a un bot expone el número y no limita cuánto ni dónde se gasta.</p></div>
+        <div class="pain"><div class="icon">📉</div><h3>Cero conciliación</h3><p>Sin un registro de la solicitud a la orden, el gasto se descontrola y nadie puede auditarlo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <div class="wrap">
+      <div class="eyebrow">Cómo funciona</div>
+      <h2>De "necesito esto" a la orden, en un chat</h2>
+      <p class="section-lead">El agente entiende la petición, y el backend se encarga de que cada paso sea seguro y respete el presupuesto.</p>
+      <div class="steps">
+        <div class="step"><h3>Pides en lenguaje natural</h3><p>"Ana necesita un teclado inalámbrico, máximo 80 dólares". Gemini 3.8 entiende quién, qué y el tope con <code>function calling</code>.</p></div>
+        <div class="step"><h3>Busca en comercios compatibles</h3><p>Reap busca en catálogos reales y solo ofrece comercios que envían al país del contacto.</p></div>
+        <div class="step"><h3>Cotiza con envío real</h3><p>La cotización usa la dirección del contacto: subtotal, envío, impuestos y total antes de pagar.</p></div>
+        <div class="step"><h3>Tú apruebas, el tope manda</h3><p>El backend vuelve a leer la cotización y rechaza el cargo si pasa el tope. Apruebas en la página segura de Reap y queda la orden.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="control">
+    <div class="wrap guard">
+      <div>
+        <div class="eyebrow">Control de gasto</div>
+        <h2>No es un chatbot que compra. Es un agente con reglas.</h2>
+        <p class="section-lead">La IA propone; las reglas se validan en el servidor, donde el modelo no las puede saltar.</p>
+        <ul class="checks">
+          <li><div class="dot">✓</div><div><strong>Tope por persona, validado en servidor</strong><span>Se compara contra el total vivo de la cotización, no contra lo que diga el cliente o el LLM.</span></div></li>
+          <li><div class="dot">✓</div><div><strong>Misma moneda o no se cobra</strong><span>Si el tope está en MXN y la cotización en USD, el cargo se bloquea.</span></div></li>
+          <li><div class="dot">✓</div><div><strong>Solo comercios compatibles</strong><span>Cualquier carrito fuera de la lista de comercios soportados se rechaza.</span></div></li>
+          <li><div class="dot">✓</div><div><strong>La tarjeta nunca toca al agente</strong><span>Se registra una vez en la página de Reap; el agente solo ve red y últimos 4 dígitos.</span></div></li>
+        </ul>
+      </div>
+      <div class="chat-demo" aria-label="Ejemplo de conversación">
+        <div class="msg user">Ana necesita un teclado inalámbrico, máximo 80 dólares</div>
+        <div class="msg ai">Encontré opciones en comercios compatibles:<br>1. AJAZZ AK820 Pro · EPOMAKER · 68.99 USD<br>2. EPOMAKER x AULA F75 · 79.99 USD<span class="tag ok">Dentro del tope · 80 USD</span></div>
+        <div class="msg user">Mándale un teclado a papá</div>
+        <div class="msg ai block">🛑 El total (68.99 USD) excede el tope autorizado para papá (25 USD). Busca otra opción o sube el tope.<span class="tag no">Bloqueado por el servidor</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="casos">
+    <div class="wrap">
+      <div class="eyebrow">Casos de uso</div>
+      <h2>Un mismo flujo, tres mundos</h2>
+      <p class="section-lead">Solicitud, cotización, aprobación y orden: lo único que cambia es quién pide y quién aprueba.</p>
+      <div class="cases">
+        <div class="case">
+          <div class="icon">🏢</div>
+          <h3>Gasto de equipo</h3>
+          <div class="who">Startups y equipos remotos</div>
+          <p>Cada persona tiene un tope. El agente cotiza teclados, hubs USB-C, monitores o artículos de oficina y el responsable aprueba. Todo queda trazado para conciliar.</p>
+          <blockquote>"El equipo de diseño necesita dos hubs USB-C, tope 60 USD cada uno"</blockquote>
+        </div>
+        <div class="case">
+          <div class="icon">🏡</div>
+          <h3>Vida diaria y regalos</h3>
+          <div class="who">Familias, también a distancia</div>
+          <p>Compra para quien te importa con su dirección y un tope por persona: café de especialidad, libros o cosas para la casa, enviados directo.</p>
+          <blockquote>"Mándale café de especialidad a mi papá, máximo 25 dólares"</blockquote>
+        </div>
+        <div class="case">
+          <div class="icon">🔗</div>
+          <h3>Tesorería en stablecoins</h3>
+          <div class="who">Equipos con fondos en USDC</div>
+          <p>Con Kwal de Payward, el agente paga con una tarjeta respaldada por una bóveda USDC en Ink Sepolia. Mismo agente, mismos topes, fondos programables.</p>
+          <blockquote>"Paga con la bóveda del equipo la licencia de la tienda de software"</blockquote>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="app">
+    <div class="wrap">
+      <div class="eyebrow">La app</div>
+      <h2>Hecha para usarse en el momento</h2>
+      <p class="section-lead">App móvil en React Native: inicias sesión con un código por correo, das de alta a tus personas una vez y luego todo pasa en el chat.</p>
+      <div class="screens">
+        <div class="screen"><div class="phone"><img src="img/chat.jpg" alt="Pantalla de chat"></div><h3>Chat con el agente</h3><p>Pides en lenguaje natural; las opciones aparecen como botones y cada compra se confirma con su desglose.</p></div>
+        <div class="screen"><div class="phone"><img src="img/contact.jpg" alt="Formulario de contacto con dirección y tope"></div><h3>Personas con dirección y tope</h3><p>Nickname para el agente, dirección de envío y tope por compra en su moneda.</p></div>
+        <div class="screen"><div class="phone"><img src="img/payment.jpg" alt="Métodos de pago"></div><h3>Tarjeta segura en Reap</h3><p>Registras la tarjeta en la página de Reap; la app nunca ve el número.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tecnologia">
+    <div class="wrap">
+      <div class="eyebrow">Tecnología</div>
+      <h2>Cómo está construido</h2>
+      <p class="section-lead">Las llaves viven solo en el backend. La app habla con un contrato de comercio normalizado que funciona igual con Reap o con Kwal.</p>
+      <div class="stack">
+        <div class="tech"><h3>💳 Reap Agentic Payments</h3><p>Enrollments, búsqueda de productos, cotizaciones y checkout con aprobación en página hospedada.</p></div>
+        <div class="tech"><h3>🔗 Kwal de Payward</h3><p>Adaptador alterno: tarjeta respaldada por una bóveda USDC en Ink Sepolia, intercambiable con una variable.</p></div>
+        <div class="tech"><h3>🧠 Gemini 3.8 Flash</h3><p>Function calling nativo con herramientas para crear, atender y listar solicitudes de compra.</p></div>
+        <div class="tech"><h3>📱 React Native</h3><p>App iOS en TypeScript con chat, contactos, métodos de pago e historial de solicitudes.</p></div>
+        <div class="tech"><h3>⚙️ Node + Express en Vercel</h3><p>Proxy seguro: valida la sesión, aplica topes y la lista de comercios, y redirige el retorno de Reap a la app.</p></div>
+        <div class="tech"><h3>🗄️ Supabase</h3><p>Auth por código de correo y Postgres con RLS para contactos y solicitudes de compra.</p></div>
+      </div>
+      <div class="flow"><b>Chat</b> ──► Gemini <i>create_purchase_request</i>
+  └─► Supabase  purchase_requests  <i>pending</i>
+       └─► <b>/products/search</b>  Reap · solo comercios que envían al país del contacto
+            └─► <b>/quotes</b>  total con envío a la dirección del contacto  <i>quoted</i>
+                 └─► <b>/checkouts</b>  el servidor relee la cotización
+                      ├─ total &gt; tope o moneda distinta  ──► <u>bloqueado</u>
+                      └─ aprobación en la página de Reap ──► deep link a la app ──► <i>completed + orderId</i></div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div>⚡ Transfertronix · Agentic Hackathon 2026</div>
+      <div>Construido en el sandbox de Reap: los pagos son simulados y no se mueve dinero real.</div>
+    </div>
+  </footer>
+</body>
+</html>
