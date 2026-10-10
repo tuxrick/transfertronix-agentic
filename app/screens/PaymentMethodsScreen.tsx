@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -14,12 +14,12 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../types/navigation';
-import type {Enrollment, EnrollmentStatus} from '../types/reap';
-import {createEnrollment, listEnrollments} from '../lib/reapApi';
+import type {PaymentMethod, PaymentSetup, VaultInfo} from '../types/commerce';
+import {getPaymentSetup, startPaymentSetup} from '../lib/commerceApi';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PaymentMethods'>;
 
-const STATUS_LABELS: Record<EnrollmentStatus, {label: string; color: string}> = {
+const CARD_STATUS: Record<string, {label: string; color: string}> = {
   ACTIVE: {label: 'Activa', color: '#22c55e'},
   REQUIRES_ACTION: {label: 'Falta completar', color: '#f59e0b'},
   REVOKED: {label: 'Revocada', color: '#64748b'},
@@ -27,19 +27,26 @@ const STATUS_LABELS: Record<EnrollmentStatus, {label: string; color: string}> = 
   EXPIRED: {label: 'Expiró', color: '#64748b'},
 };
 
+const VAULT_STATUS: Record<string, string> = {
+  READY: '✅ Lista para pagar',
+  FUNDS_NEEDED: '💧 Necesita fondos (USDC)',
+  PROCESSING: '⏳ Procesando depósito',
+  SETUP_NEEDED: '⚙️ Falta configurar con el skill de Kwal',
+  ERROR: '🛑 Requiere al operador',
+};
+
 /**
- * Métodos de pago = enrollments de Reap. La tarjeta se captura en la página
- * hospedada de Reap; la app solo ve red y últimos 4 dígitos.
+ * Reap: tarjetas guardadas (enrollments); se capturan en la página de Reap.
+ * Kwal: bóveda USDC en Ink Sepolia que respalda la tarjeta del agente.
  */
 export default function PaymentMethodsScreen({navigation}: Props) {
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [setup, setSetup] = useState<PaymentSetup | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const {items} = await listEnrollments();
-      setEnrollments(items);
+      setSetup(await getPaymentSetup());
     } catch (error: any) {
       Alert.alert('Error', error.message);
     } finally {
@@ -53,17 +60,11 @@ export default function PaymentMethodsScreen({navigation}: Props) {
     }, [load]),
   );
 
-  const openHostedStep = async (enrollment: Enrollment) => {
-    if (enrollment.nextAction?.url) {
-      await Linking.openURL(enrollment.nextAction.url);
-    }
-  };
-
-  const handleAdd = async () => {
+  const handleAddCard = async () => {
     setCreating(true);
     try {
-      const enrollment = await createEnrollment();
-      await openHostedStep(enrollment);
+      const {actionUrl} = await startPaymentSetup();
+      if (actionUrl) await Linking.openURL(actionUrl);
       await load();
     } catch (error: any) {
       Alert.alert('Error', error.message);
@@ -72,32 +73,60 @@ export default function PaymentMethodsScreen({navigation}: Props) {
     }
   };
 
-  const renderItem = ({item}: {item: Enrollment}) => {
-    const status = STATUS_LABELS[item.status];
-    const card = item.paymentMethod;
+  const renderCard = (method: PaymentMethod) => {
+    const status = CARD_STATUS[method.status] || {label: method.status, color: '#64748b'};
     return (
-      <View style={styles.card}>
+      <View key={method.id} style={styles.card}>
         <View style={styles.cardRow}>
-          <Text style={styles.cardTitle}>
-            {card ? `${card.network} •••• ${card.last4}` : 'Tarjeta en registro'}
-          </Text>
+          <Text style={styles.cardTitle}>{method.label}</Text>
           <View style={[styles.badge, {backgroundColor: status.color}]}>
             <Text style={styles.badgeText}>{status.label}</Text>
           </View>
         </View>
-        {card && (
-          <Text style={styles.cardSubtitle}>
-            Vence {String(card.expiryMonth).padStart(2, '0')}/{card.expiryYear}
-          </Text>
-        )}
-        {item.status === 'REQUIRES_ACTION' && item.nextAction?.url && (
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => openHostedStep(item)}>
+        {method.actionUrl && (
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => Linking.openURL(method.actionUrl!)}>
             <Text style={styles.buttonText}>Completar registro</Text>
           </TouchableOpacity>
         )}
       </View>
     );
   };
+
+  const renderVault = (vault: VaultInfo) => (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>Bóveda Kwal · {vault.chain || 'Ink Sepolia'}</Text>
+      <Text style={styles.cardSubtitle}>{VAULT_STATUS[vault.state] || vault.state}</Text>
+      {vault.available && (
+        <Text style={styles.balance}>
+          {vault.available.amount.toFixed(2)} {vault.available.currency}
+        </Text>
+      )}
+      {vault.address && (
+        <Text style={styles.mono} numberOfLines={1} ellipsizeMode="middle">
+          {vault.address}
+        </Text>
+      )}
+      <View style={styles.linksRow}>
+        {vault.explorerUrl && (
+          <TouchableOpacity onPress={() => Linking.openURL(vault.explorerUrl!)}>
+            <Text style={styles.link}>Ver en explorer</Text>
+          </TouchableOpacity>
+        )}
+        {vault.usdcFaucetUrl && (
+          <TouchableOpacity onPress={() => Linking.openURL(vault.usdcFaucetUrl!)}>
+            <Text style={styles.link}>Faucet USDC</Text>
+          </TouchableOpacity>
+        )}
+        {vault.gasFaucetUrl && (
+          <TouchableOpacity onPress={() => Linking.openURL(vault.gasFaucetUrl!)}>
+            <Text style={styles.link}>Faucet ETH</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  const isReap = setup?.provider === 'reap';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -106,33 +135,36 @@ export default function PaymentMethodsScreen({navigation}: Props) {
           <Text style={styles.headerTitle}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Métodos de pago</Text>
-        <View style={{width: 24}} />
+        <View style={styles.headerSpacer} />
       </View>
 
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" color="#3b82f6" />
       ) : (
-        <FlatList
-          data={enrollments}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
+        <ScrollView
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={load} tintColor="#3b82f6" />}
-          ListHeaderComponent={
-            <Text style={styles.info}>
-              🔐 Tu tarjeta se guarda en Reap. El agente nunca ve sus datos y tú apruebas cada cargo.
-            </Text>
-          }
-          ListEmptyComponent={<Text style={styles.empty}>Aún no tienes métodos de pago.</Text>}
-        />
+          refreshControl={<RefreshControl refreshing={false} onRefresh={load} tintColor="#3b82f6" />}>
+          <Text style={styles.info}>
+            {isReap
+              ? '🔐 Tu tarjeta se guarda en Reap. El agente nunca ve sus datos y tú apruebas cada cargo.'
+              : '🔗 El agente paga con una tarjeta respaldada por USDC en tu bóveda de Ink Sepolia. Tú controlas la wallet dueña.'}
+          </Text>
+          {isReap && setup?.methods.length === 0 && (
+            <Text style={styles.empty}>Aún no tienes tarjetas registradas.</Text>
+          )}
+          {isReap && setup?.methods.map(renderCard)}
+          {!isReap && setup?.vault && renderVault(setup.vault)}
+        </ScrollView>
       )}
 
-      <TouchableOpacity
-        style={[styles.primaryButton, creating && styles.buttonDisabled]}
-        onPress={handleAdd}
-        disabled={creating}>
-        {creating ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.buttonText}>➕ Agregar tarjeta</Text>}
-      </TouchableOpacity>
+      {isReap && (
+        <TouchableOpacity
+          style={[styles.primaryButton, creating && styles.buttonDisabled]}
+          onPress={handleAddCard}
+          disabled={creating}>
+          {creating ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.buttonText}>➕ Agregar tarjeta</Text>}
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -150,6 +182,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#334155',
   },
   headerTitle: {fontSize: 18, fontWeight: 'bold', color: '#ffffff'},
+  headerSpacer: {width: 24},
   loader: {marginTop: 40},
   list: {padding: 16, gap: 12},
   info: {color: '#94a3b8', fontSize: 13, marginBottom: 8, lineHeight: 18},
@@ -158,6 +191,10 @@ const styles = StyleSheet.create({
   cardRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
   cardTitle: {color: '#ffffff', fontSize: 16, fontWeight: '600'},
   cardSubtitle: {color: '#94a3b8', fontSize: 13, marginTop: 4},
+  balance: {color: '#ffffff', fontSize: 28, fontWeight: 'bold', marginTop: 12},
+  mono: {color: '#94a3b8', fontSize: 12, fontFamily: 'Courier', marginTop: 8},
+  linksRow: {flexDirection: 'row', gap: 16, marginTop: 12},
+  link: {color: '#3b82f6', fontSize: 13, fontWeight: '600'},
   badge: {borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4},
   badgeText: {color: '#ffffff', fontSize: 12, fontWeight: '600'},
   primaryButton: {

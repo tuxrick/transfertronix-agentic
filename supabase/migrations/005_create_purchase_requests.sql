@@ -1,8 +1,8 @@
 -- ============================================
 -- TABLE: purchase_requests
 -- ============================================
--- Una solicitud de compra: alguien pide algo, el agente cotiza en Reap
--- y quien paga aprueba el cargo en la página hospedada de Reap.
+-- Una solicitud de compra: alguien pide algo, el agente cotiza
+-- y quien paga aprueba el cargo (Reap: página hospedada; Kwal: bóveda USDC).
 --
 -- Estados:
 --   pending           -> creada, sin cotización
@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
 
   item_description TEXT NOT NULL,
   max_amount DECIMAL(20, 2),
+  max_currency TEXT, -- Moneda del tope; el backend no cobra si no coincide con la cotización
   currency TEXT NOT NULL DEFAULT 'MXN',
 
   -- Selección del agente
@@ -26,12 +27,12 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
   variant_id TEXT,
   product_snapshot JSONB,
 
-  -- Reap
+  -- Proveedor de pagos (reap | kwal)
+  provider TEXT,
   quote_id TEXT,
   quote_expires_at TIMESTAMP WITH TIME ZONE,
   quoted_amount DECIMAL(20, 2),
-  enrollment_id TEXT,
-  checkout_id TEXT,
+  checkout_id TEXT, -- Reap checkout id o Kwal payment id
   order_id TEXT,
   final_amount DECIMAL(20, 2),
 
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
   CONSTRAINT valid_purchase_status CHECK (
     status IN ('pending', 'quoted', 'awaiting_approval', 'completed', 'failed', 'expired', 'cancelled')
   ),
+  CONSTRAINT valid_provider CHECK (provider IS NULL OR provider IN ('reap', 'kwal')),
   CONSTRAINT positive_max_amount CHECK (max_amount IS NULL OR max_amount > 0)
 );
 

@@ -2,11 +2,20 @@ require('dotenv').config();
 
 const config = {
   port: Number(process.env.PORT || 3000),
+  // reap | kwal
+  paymentProvider: (process.env.PAYMENT_PROVIDER || 'reap').toLowerCase(),
   reap: {
     apiKey: process.env.REAP_API_KEY || '',
     baseUrl: process.env.REAP_BASE_URL || 'https://mx.sandbox.api.reap.global',
     version: process.env.REAP_VERSION || '2025-02-14',
     simulateCheckout: process.env.REAP_SIMULATE_CHECKOUT === 'true',
+  },
+  kwal: {
+    serviceUrl: process.env.KWAL_SERVICE_URL || 'https://api.sandbox.services.payward.com',
+    // Path to the credentials.json written by the Kwal skill (outside the repo)
+    credentialsFile: process.env.KWAL_CREDENTIALS_FILE || '',
+    token: process.env.KWAL_TOKEN || '',
+    explorerUrl: process.env.KWAL_EXPLORER_URL || 'https://explorer-sepolia.inkonchain.com',
   },
   supabase: {
     url: process.env.SUPABASE_URL || '',

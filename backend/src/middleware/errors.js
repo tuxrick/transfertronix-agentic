@@ -1,10 +1,15 @@
 const { ReapError } = require('../reap/client');
+const { KwalError } = require('../kwal/client');
 
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
   if (err instanceof ReapError) {
     console.error(`Reap ${err.status} ${err.code}: ${err.message}`);
     return res.status(err.status).json({ error: { code: err.code, message: err.message, detail: err.detail } });
+  }
+  if (err instanceof KwalError) {
+    console.error(`Kwal ${err.status} ${err.code}: ${err.message}`);
+    return res.status(err.status).json({ error: { code: err.code, message: err.message } });
   }
   if (err.status && err.code) {
     return res.status(err.status).json({ error: { code: err.code, message: err.message } });

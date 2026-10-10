@@ -1,17 +1,20 @@
 /**
- * Cliente de la app hacia el backend de Transfertronix, que a su vez habla con Reap.
- * La API key de Reap nunca vive en la app: solo se manda el JWT de Supabase.
+ * Cliente de la app hacia el backend de Transfertronix.
+ * El backend habla con Reap o Kwal; las llaves nunca viven en la app.
  */
 
 import {getBackendUrl} from '../config';
 import {supabase} from './supabase';
 import type {
   Checkout,
-  Enrollment,
+  ExternalCheckout,
+  Merchant,
+  PaymentProviderName,
+  PaymentSetup,
   ProductSearchResult,
   Quote,
   ShippingAddress,
-} from '../types/reap';
+} from '../types/commerce';
 
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) {
@@ -26,7 +29,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } = await supabase.auth.getSession();
   if (!session) throw new ApiError(401, 'UNAUTHENTICATED', 'Inicia sesión de nuevo');
 
-  const response = await fetch(`${getBackendUrl()}/api/agentic${path}`, {
+  const response = await fetch(`${getBackendUrl()}/api/commerce${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${session.access_token}`,
@@ -46,44 +49,47 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return data as T;
 }
 
-// Enrollments (métodos de pago)
-export const listEnrollments = () => request<{items: Enrollment[]}>('GET', '/enrollments');
-export const createEnrollment = () => request<Enrollment>('POST', '/enrollments');
-export const getEnrollment = (id: string) => request<Enrollment>('GET', `/enrollments/${id}`);
+export const getProvider = () =>
+  request<{name: PaymentProviderName; approvalMode: 'hosted_page' | 'vault'}>('GET', '/provider');
 
-export async function getActiveEnrollment(): Promise<Enrollment | undefined> {
-  const {items} = await listEnrollments();
-  return items.find(e => e.status === 'ACTIVE');
-}
+export const getMerchants = (country?: string) =>
+  request<{items: Merchant[]; categories: {name: string; merchantCount: number}[]}>(
+    'GET',
+    `/merchants${country ? `?country=${encodeURIComponent(country)}` : ''}`,
+  );
 
-// Productos
+// Métodos de pago (tarjeta en Reap o bóveda en Kwal)
+export const getPaymentSetup = () => request<PaymentSetup>('GET', '/payment-setup');
+export const startPaymentSetup = () =>
+  request<{actionUrl?: string; id?: string}>('POST', '/payment-setup');
+
 export interface SearchProductsInput {
   query: string;
   country?: string;
   currency?: string;
   maxPrice?: number;
-  merchantName?: string;
   limit?: number;
 }
 
 export const searchProducts = (input: SearchProductsInput) =>
   request<ProductSearchResult>('POST', '/products/search', input);
 
-// Cotizaciones
 export const createQuote = (input: {
-  items: {variantId: string; quantity: number}[];
+  productId?: string;
+  variantId?: string;
+  quantity?: number;
+  externalCheckout?: ExternalCheckout;
   shippingAddress?: ShippingAddress;
-  offerCode?: string;
 }) => request<Quote>('POST', '/quotes', input);
 
 export const getQuote = (id: string) => request<Quote>('GET', `/quotes/${id}`);
 
-// Checkouts
 export const createCheckout = (input: {
   quoteId: string;
-  enrollmentId: string;
   maxAmount?: number;
+  maxCurrency?: string;
   ref?: string;
-}) => request<Checkout>('POST', '/checkouts', input);
+}) =>
+  request<Checkout>('POST', '/checkouts', input);
 
 export const getCheckout = (id: string) => request<Checkout>('GET', `/checkouts/${id}`);

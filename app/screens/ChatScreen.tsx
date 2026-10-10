@@ -18,11 +18,11 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {Content} from '@google/generative-ai';
 import type {RootStackParamList} from '../types/navigation';
 import type {Contact} from '../types/contact';
-import type {Product, Quote} from '../types/reap';
+import type {PaymentProviderName, Product, Quote} from '../types/commerce';
 import type {PurchaseRequest} from '../types/purchaseRequest';
-import {processMessageWithAI, type FunctionCall} from '../lib/geminiAgent';
+import {processMessageWithAI, type FunctionCall, type ShippingCatalog} from '../lib/geminiAgent';
 import {getContacts, findContact, hasShippingAddress} from '../lib/contacts';
-import {getActiveEnrollment, searchProducts, ApiError} from '../lib/reapApi';
+import {getMerchants, getPaymentSetup, searchProducts, ApiError} from '../lib/commerceApi';
 import {
   createPurchaseRequest,
   getPurchaseRequests,
@@ -49,6 +49,9 @@ interface Message {
 
 const OPEN_STATUSES: PurchaseRequest['status'][] = ['pending', 'quoted', 'awaiting_approval'];
 const MAX_HISTORY_TURNS = 10;
+const DEFAULT_COUNTRY = 'MX';
+const PAYMENT_POLL_ATTEMPTS = 12;
+const PAYMENT_POLL_INTERVAL_MS = 5000;
 
 const STATUS_LABELS: Record<PurchaseRequest['status'], string> = {
   pending: '🕐 Pendiente',
@@ -70,14 +73,12 @@ function formatMoney(amount: number, currency: string) {
 }
 
 function formatQuote(quote: Quote) {
-  const b = quote.amountBreakdown;
-  const lines = [`Subtotal: ${formatMoney(b.itemsSubtotal.amount, b.itemsSubtotal.currency)}`];
-  if (b.shipping) lines.push(`Envío: ${formatMoney(b.shipping.amount, b.shipping.currency)}`);
-  if (b.tax && !b.tax.includedInPrices) {
-    lines.push(`Impuestos: ${formatMoney(b.tax.amount.amount, b.tax.amount.currency)}`);
-  }
-  b.discounts.forEach(d => lines.push(`${d.name}: -${formatMoney(d.amount.amount, d.amount.currency)}`));
-  lines.push(`\nTotal: ${formatMoney(b.finalAmount.amount, b.finalAmount.currency)}`);
+  const lines: string[] = [];
+  if (quote.subtotal) lines.push(`Subtotal: ${formatMoney(quote.subtotal.amount, quote.subtotal.currency)}`);
+  if (quote.shipping) lines.push(`Envío: ${formatMoney(quote.shipping.amount, quote.shipping.currency)}`);
+  if (quote.tax) lines.push(`Impuestos: ${formatMoney(quote.tax.amount, quote.tax.currency)}`);
+  quote.discounts.forEach(d => lines.push(`${d.name}: -${formatMoney(d.amount.amount, d.amount.currency)}`));
+  lines.push(`\nTotal: ${formatMoney(quote.total.amount, quote.total.currency)}`);
   return lines.join('\n');
 }
 
@@ -87,9 +88,10 @@ export default function ChatScreen({navigation}: Props) {
       id: '1',
       text:
         '¡Hola! Soy Transfertronix 🤖\n\n' +
-        'Compro lo que tú o tus contactos necesiten y tú apruebas cada cargo de forma segura con Reap.\n\n' +
+        'Compro lo que tú, tu familia o tu equipo necesiten, dentro del tope que definas, y tú confirmas cada cargo.\n\n' +
         'Ejemplos:\n' +
-        '🛒 "Mándale pañales a mi mamá, máximo 600 pesos"\n' +
+        '⌨️ "Ana necesita un teclado inalámbrico, máximo 60 dólares"\n' +
+        '☕ "Mándale café de especialidad a mi papá"\n' +
         '📦 "Atiende lo que pidió Olivia"\n' +
         '📋 "¿Cómo van mis pedidos?"',
       sender: 'ai',
@@ -101,6 +103,8 @@ export default function ChatScreen({navigation}: Props) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [openRequests, setOpenRequests] = useState<PurchaseRequest[]>([]);
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
+  const [provider, setProvider] = useState<PaymentProviderName>();
+  const [shippingCatalog, setShippingCatalog] = useState<ShippingCatalog[]>([]);
   const historyRef = useRef<Content[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
@@ -112,7 +116,20 @@ export default function ChatScreen({navigation}: Props) {
       ]);
       setContacts(contactsData);
       setOpenRequests(requestsData);
-      setHasPaymentMethod(Boolean(await getActiveEnrollment().catch(() => undefined)));
+
+      const countries = [...new Set([DEFAULT_COUNTRY, ...contactsData.map(c => c.country).filter(Boolean)])] as string[];
+      const [setup, ...catalogs] = await Promise.all([
+        getPaymentSetup().catch(() => undefined),
+        ...countries.map(country => getMerchants(country).catch(() => undefined)),
+      ]);
+      setHasPaymentMethod(Boolean(setup?.ready));
+      setProvider(setup?.provider);
+      setShippingCatalog(
+        countries.map((country, i) => ({
+          country,
+          categories: (catalogs[i] as Awaited<ReturnType<typeof getMerchants>> | undefined)?.categories.map(c => c.name) || [],
+        })),
+      );
     } catch (error) {
       console.error('Error loading context:', error);
     }
@@ -148,9 +165,19 @@ export default function ChatScreen({navigation}: Props) {
   const reportError = useCallback(
     async (error: unknown) => {
       if (error instanceof ApiError && error.code === 'NO_PAYMENT_METHOD') {
-        await addMessage('💳 Necesitas un método de pago antes de comprar.', 'ai', {
+        await addMessage(`💳 ${error.message}.`, 'ai', {
           actions: [{label: 'Agregar método de pago', onPress: () => navigation.navigate('PaymentMethods')}],
         });
+        return;
+      }
+      if (error instanceof ApiError && error.code === 'INSUFFICIENT_FUNDS') {
+        await addMessage(`💧 ${error.message}.`, 'ai', {
+          actions: [{label: 'Ver bóveda', onPress: () => navigation.navigate('PaymentMethods')}],
+        });
+        return;
+      }
+      if (error instanceof ApiError && error.code === 'BUDGET_CURRENCY_MISMATCH') {
+        await addMessage(`💱 ${error.message}.`, 'ai');
         return;
       }
       if (error instanceof ApiError && error.code === 'BUDGET_EXCEEDED') {
@@ -171,7 +198,9 @@ export default function ChatScreen({navigation}: Props) {
 
       if (kind === 'enrollment') {
         await loadContext();
-        await addMessage('💳 Volviste de registrar tu tarjeta. Revisa su estado en Métodos de pago.', 'ai');
+        await addMessage('💳 Volviste de registrar tu tarjeta. Revisa su estado en Métodos de pago.', 'ai', {
+          actions: [{label: 'Ver métodos de pago', onPress: () => navigation.navigate('PaymentMethods')}],
+        });
         return;
       }
       if (kind !== 'checkout' || !ref) return;
@@ -196,7 +225,7 @@ export default function ChatScreen({navigation}: Props) {
         await reportError(error);
       }
     },
-    [addMessage, loadContext, reportError],
+    [addMessage, loadContext, navigation, reportError],
   );
 
   useEffect(() => {
@@ -205,26 +234,40 @@ export default function ChatScreen({navigation}: Props) {
     return () => subscription.remove();
   }, [handleReturnUrl]);
 
+  // Kwal no regresa por deep link: se consulta el pago hasta que termine.
+  const pollPayment = async (request: PurchaseRequest) => {
+    let current = request;
+    for (let attempt = 0; attempt < PAYMENT_POLL_ATTEMPTS && current.status === 'awaiting_approval'; attempt++) {
+      await new Promise<void>(resolve => setTimeout(resolve, PAYMENT_POLL_INTERVAL_MS));
+      current = await syncCheckout(current);
+    }
+    await handleReturnUrl(`transfertronix://agentic/return?kind=checkout&ref=${current.id}`);
+  };
+
   const confirmAndCheckout = async (request: PurchaseRequest, quote: Quote, product: Product) => {
+    const isReap = provider === 'reap';
     Alert.alert(
       '🛒 Confirmar compra',
-      `${product.name}\n${product.merchant.name}\n\n` +
+      `${product.name}\n${product.merchant || ''}\n\n` +
         `👤 Para: ${request.contact_name || 'ti'}\n\n${formatQuote(quote)}\n\n` +
-        'Aprobarás el cargo en la página segura de Reap.',
+        (isReap
+          ? 'Aprobarás el cargo en la página segura de Reap.'
+          : 'Se pagará con la tarjeta respaldada por tu bóveda USDC.'),
       [
         {text: 'Cancelar', style: 'cancel', onPress: () => addMessage('Compra cancelada.', 'ai', {skipDelay: true})},
         {
-          text: 'Aprobar en Reap',
+          text: isReap ? 'Aprobar en Reap' : 'Pagar con bóveda',
           onPress: async () => {
             try {
               const updated = await startCheckout(request);
-              await addMessage(
-                updated.status === 'completed'
-                  ? '✅ Cargo aprobado.'
-                  : '🔐 Abrí la página de aprobación de Reap. Cuando termines, regresa a la app.',
-                'ai',
-              );
-              if (updated.status === 'completed') await handleReturnUrl(`transfertronix://agentic/return?kind=checkout&ref=${updated.id}`);
+              if (updated.status === 'completed') {
+                await handleReturnUrl(`transfertronix://agentic/return?kind=checkout&ref=${updated.id}`);
+              } else if (isReap) {
+                await addMessage('🔐 Abrí la página de aprobación de Reap. Cuando termines, regresa a la app.', 'ai');
+              } else {
+                await addMessage('⏳ La bóveda está pagando, te aviso cuando se confirme...', 'ai');
+                await pollPayment(updated);
+              }
             } catch (error) {
               await reportError(error);
             }
@@ -248,7 +291,7 @@ export default function ChatScreen({navigation}: Props) {
     await addMessage(`🔎 Buscando "${request.item_description}"...`, 'ai', {skipDelay: true});
     const result = await searchProducts({
       query: request.item_description,
-      country: contact?.country,
+      country: contact?.country || DEFAULT_COUNTRY,
       currency: request.currency,
       maxPrice: request.max_amount,
       limit: 3,
@@ -260,8 +303,8 @@ export default function ChatScreen({navigation}: Props) {
     }
 
     const lines = result.products.map((p, i) => {
-      const price = p.previewVariant?.price || p.priceRange.min;
-      return `${i + 1}. ${p.name}\n   ${p.merchant.name} · ${formatMoney(price.amount, price.currency)}`;
+      const price = p.price ? ` · ${formatMoney(p.price.amount, p.price.currency)}` : '';
+      return `${i + 1}. ${p.name}\n   ${p.merchant || 'Comercio compatible'}${price}`;
     });
     await addMessage(`Encontré estas opciones:\n\n${lines.join('\n\n')}`, 'ai', {
       actions: result.products.map((p, i) => ({
@@ -298,6 +341,7 @@ export default function ChatScreen({navigation}: Props) {
       contact_name: contact?.name,
       item_description: args.item_description,
       max_amount: args.max_amount ?? contact?.spend_limit,
+      max_currency: args.max_amount ? args.currency || 'MXN' : contact?.currency,
       currency: args.currency || contact?.currency || 'MXN',
     });
     await searchOptions(request, contact);
@@ -363,7 +407,7 @@ export default function ChatScreen({navigation}: Props) {
     try {
       const aiResponse = await processMessageWithAI(
         userMessage,
-        {contacts, openRequests, hasPaymentMethod},
+        {contacts, openRequests, hasPaymentMethod, provider, shippingCatalog},
         historyRef.current,
       );
 
@@ -460,7 +504,7 @@ export default function ChatScreen({navigation}: Props) {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder="Ej: Mándale pañales a mi mamá"
+              placeholder="Ej: Ana necesita un teclado, máximo 60 USD"
               placeholderTextColor="#64748b"
               value={inputText}
               onChangeText={setInputText}
@@ -476,7 +520,7 @@ export default function ChatScreen({navigation}: Props) {
               {processing ? <ActivityIndicator size="small" color="#ffffff" /> : <Text style={styles.sendIcon}>➤</Text>}
             </TouchableOpacity>
           </View>
-          <Text style={styles.inputHint}>🔐 Cada cargo lo apruebas tú en Reap</Text>
+          <Text style={styles.inputHint}>🔐 Solo comercios compatibles · tú confirmas cada cargo</Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

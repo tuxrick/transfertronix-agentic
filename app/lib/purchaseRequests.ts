@@ -1,16 +1,17 @@
 /**
  * Purchase Requests
  *
- * Orquesta el flujo completo con Reap y persiste cada paso en Supabase:
- * solicitud -> cotización -> checkout (aprobación hospedada) -> orden.
+ * Orquesta el flujo completo y persiste cada paso en Supabase:
+ * solicitud -> cotización -> checkout (aprobación del pagador) -> orden.
+ * El proveedor (Reap o Kwal) lo decide el backend.
  */
 
 import {Linking} from 'react-native';
 import {supabase} from './supabase';
-import * as reap from './reapApi';
+import * as commerce from './commerceApi';
 import {toShippingAddress} from './contacts';
 import type {Contact} from '../types/contact';
-import type {Product, Quote, Checkout} from '../types/reap';
+import type {Product, Quote, Checkout} from '../types/commerce';
 import type {
   CreatePurchaseRequestInput,
   PurchaseRequest,
@@ -78,54 +79,52 @@ export async function quotePurchase(
   product: Product,
   contact?: Contact,
 ): Promise<{request: PurchaseRequest; quote: Quote}> {
-  const variantId = product.previewVariant?.id;
-  if (!variantId) throw new Error('El producto no tiene una variante comprable');
-
-  const quote = await reap.createQuote({
-    items: [{variantId, quantity: 1}],
+  const quote = await commerce.createQuote({
+    productId: product.externalCheckout ? undefined : product.id,
+    variantId: product.variantId,
+    externalCheckout: product.externalCheckout,
     shippingAddress: contact ? toShippingAddress(contact) : undefined,
   });
 
   const updated = await update(request.id, {
     product_id: product.id,
-    variant_id: variantId,
-    product_snapshot: {name: product.name, merchant: product.merchant.name, imageUrl: product.imageUrl},
+    variant_id: product.variantId,
+    product_snapshot: {name: product.name, merchant: product.merchant, imageUrl: product.imageUrl},
     quote_id: quote.id,
     quote_expires_at: quote.expiresAt,
-    quoted_amount: quote.amountBreakdown.finalAmount.amount,
-    currency: quote.amountBreakdown.finalAmount.currency,
+    quoted_amount: quote.total.amount,
+    currency: quote.total.currency,
+    max_currency: request.max_currency || request.currency,
     status: 'quoted',
   });
   return {request: updated, quote};
 }
 
 /**
- * Crea el checkout y abre la página de aprobación de Reap.
+ * Crea el checkout. Con Reap abre la página de aprobación; con Kwal la bóveda paga.
  * El backend rechaza el cargo si el total vivo excede max_amount.
  */
 export async function startCheckout(request: PurchaseRequest): Promise<PurchaseRequest> {
   if (!request.quote_id) throw new Error('La solicitud no tiene cotización');
 
-  const enrollment = await reap.getActiveEnrollment();
-  if (!enrollment) {
-    throw new reap.ApiError(409, 'NO_PAYMENT_METHOD', 'Agrega un método de pago primero');
-  }
-
-  const checkout = await reap.createCheckout({
-    quoteId: request.quote_id,
-    enrollmentId: enrollment.id,
-    maxAmount: request.max_amount ?? undefined,
-    ref: request.id,
-  });
+  const [{name: provider}, checkout] = await Promise.all([
+    commerce.getProvider(),
+    commerce.createCheckout({
+      quoteId: request.quote_id,
+      maxAmount: request.max_amount ?? undefined,
+      maxCurrency: request.max_amount ? request.max_currency : undefined,
+      ref: request.id,
+    }),
+  ]);
 
   const updated = await update(request.id, {
-    enrollment_id: enrollment.id,
+    provider,
     checkout_id: checkout.id,
     status: CHECKOUT_STATUS_MAP[checkout.status],
   });
 
-  if (checkout.nextAction?.url) {
-    await Linking.openURL(checkout.nextAction.url);
+  if (checkout.approvalUrl) {
+    await Linking.openURL(checkout.approvalUrl);
   }
   return checkout.status === 'COMPLETED' ? syncCheckout(updated) : updated;
 }
@@ -135,13 +134,14 @@ export async function startCheckout(request: PurchaseRequest): Promise<PurchaseR
  */
 export async function syncCheckout(request: PurchaseRequest): Promise<PurchaseRequest> {
   if (!request.checkout_id) return request;
-  const checkout = await reap.getCheckout(request.checkout_id);
+  const checkout = await commerce.getCheckout(request.checkout_id);
   const status = CHECKOUT_STATUS_MAP[checkout.status];
 
   return update(request.id, {
     status,
     order_id: checkout.orderId,
-    final_amount: checkout.finalAmount?.amount,
+    final_amount: checkout.total?.amount,
+    error_message: checkout.reason,
     completed_at: status === 'completed' ? new Date().toISOString() : undefined,
   });
 }

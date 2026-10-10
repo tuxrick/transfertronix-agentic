@@ -2,7 +2,7 @@
  * Gemini AI Agent with Function Calling
  *
  * El agente interpreta lo que pide el usuario y decide qué acción tomar.
- * Nunca ejecuta un cargo: cada compra termina en la página de aprobación de Reap.
+ * Nunca maneja datos de tarjeta ni cobra sin confirmación del usuario.
  */
 
 import {
@@ -13,6 +13,7 @@ import {
 } from '@google/generative-ai';
 import type {Contact} from '../types/contact';
 import type {PurchaseRequest} from '../types/purchaseRequest';
+import type {PaymentProviderName} from '../types/commerce';
 import {config} from '../config';
 
 const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
@@ -75,11 +76,23 @@ const functionDeclarations: FunctionDeclaration[] = [
   },
 ];
 
+export interface ShippingCatalog {
+  country: string;
+  categories: string[];
+}
+
 export interface AIContext {
   contacts: Contact[];
   openRequests: PurchaseRequest[];
   hasPaymentMethod: boolean;
+  provider?: PaymentProviderName;
+  shippingCatalog: ShippingCatalog[];
 }
+
+const PROVIDER_DESCRIPTIONS: Record<PaymentProviderName, string> = {
+  reap: 'Reap Agentic Payments: el usuario aprueba cada cargo en una página segura de Reap',
+  kwal: 'Kwal: la tarjeta del agente está respaldada por USDC en la bóveda del usuario (Ink Sepolia)',
+};
 
 export interface FunctionCall {
   name: string;
@@ -106,9 +119,13 @@ function buildSystemPrompt(context: AIContext): string {
     .map(r => `- ${r.contact_name || 'Tú'}: ${r.item_description} (${r.status})`)
     .join('\n');
 
+  const catalogInfo = context.shippingCatalog
+    .map(c => `- Envíos a ${c.country}: ${c.categories.join(', ')}`)
+    .join('\n');
+
   return `Eres Transfertronix, un agente que compra cosas por el usuario y para sus contactos (familia, equipo o amigos).
-Los pagos se hacen con Reap: tú buscas y cotizas, y el usuario SIEMPRE aprueba el cargo final en una página segura.
-Nunca pidas ni manejes datos de tarjeta.
+Pagos: ${context.provider ? PROVIDER_DESCRIPTIONS[context.provider] : 'no disponible'}.
+Tú buscas y cotizas; el usuario confirma cada compra. Nunca pidas ni manejes datos de tarjeta.
 
 CONTACTOS:
 ${contactsInfo || 'Sin contactos'}
@@ -116,13 +133,17 @@ ${contactsInfo || 'Sin contactos'}
 SOLICITUDES ABIERTAS:
 ${requestsInfo || 'Ninguna'}
 
-MÉTODO DE PAGO: ${context.hasPaymentMethod ? 'configurado' : 'no configurado (sugiere agregarlo desde el botón 💳)'}
+COMERCIOS COMPATIBLES POR PAÍS DE ENVÍO (solo se puede comprar aquí):
+${catalogInfo || 'Sin datos'}
+
+MÉTODO DE PAGO: ${context.hasPaymentMethod ? 'listo' : 'no listo (sugiere revisarlo desde el botón 💳)'}
 
 Reglas:
 - Si el usuario pide comprar o mandar algo, llama create_purchase_request.
 - Si menciona atender o pagar lo que pidió un contacto, llama fulfill_purchase_request.
 - Si pregunta por sus pedidos o solicitudes, llama list_purchase_requests.
-- No ofrezcas viajes, apuestas ni contenido para adultos.
+- Si lo que piden no está en las categorías que envían al país del contacto, dilo y sugiere algo que sí esté.
+- Fuera de alcance: viajes, apuestas, contenido para adultos y categorías restringidas.
 - Responde en español, breve y amigable.`;
 }
 

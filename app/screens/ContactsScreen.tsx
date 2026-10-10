@@ -52,7 +52,7 @@ export default function ContactsScreen() {
     try {
       await toggleFavorite(contactId, !currentFavorite);
       loadContacts();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'No se pudo actualizar el favorito');
     }
   };
@@ -71,7 +71,7 @@ export default function ContactsScreen() {
               await deleteContact(contactId);
               Alert.alert('Éxito', 'Contacto eliminado');
               loadContacts();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'No se pudo eliminar el contacto');
             }
           },

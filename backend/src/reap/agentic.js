@@ -58,11 +58,15 @@ function resolveVariant({ productId, optionIds }) {
 
 // --- Quotes ---
 
-function createQuote({ items, email, shippingAddress, offerCode }) {
+/**
+ * Either `items` (discovery flow) or `externalCheckout` (merchant cart URL from the
+ * supported merchant list). Reap requires a shipping address for the latter.
+ */
+function createQuote({ items, externalCheckout, email, shippingAddress, offerCode }) {
   return reapRequest('POST', '/agentic/quotes', {
     idempotent: true,
     body: {
-      items,
+      ...(externalCheckout ? { externalCheckout } : { items }),
       email,
       ...(shippingAddress && { shippingAddress }),
       ...(offerCode && { offerCode }),

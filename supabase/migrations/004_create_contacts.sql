@@ -2,7 +2,7 @@
 -- TABLE: contacts
 -- ============================================
 -- Personas para quienes el agente puede comprar (familia, empleados, amigos).
--- La dirección de envío alimenta el shippingAddress de las cotizaciones de Reap.
+-- La dirección de envío alimenta el shippingAddress de las cotizaciones.
 
 CREATE TABLE IF NOT EXISTS contacts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   email TEXT,
   phone TEXT, -- Formato E.164, ej: +5215512345678
 
-  -- Shipping address (Reap shippingAddress)
+  -- Shipping address
   address_line1 TEXT,
   address_line2 TEXT,
   city TEXT,

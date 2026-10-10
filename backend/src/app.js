@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const agenticRoutes = require('./routes/agentic');
+const commerceRoutes = require('./routes/commerce');
 const returnRoutes = require('./routes/return');
 const { requireUser } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/errors');
@@ -20,7 +20,7 @@ function createApp() {
   });
 
   app.use('/agentic/return', returnRoutes);
-  app.use('/api/agentic', requireUser, agenticRoutes);
+  app.use('/api/commerce', requireUser, commerceRoutes);
 
   app.use(errorHandler);
   return app;

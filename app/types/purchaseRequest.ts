@@ -19,6 +19,7 @@ export interface PurchaseRequest {
   contact_name?: string;
   item_description: string;
   max_amount?: number;
+  max_currency?: string;
   currency: string;
   product_id?: string;
   variant_id?: string;
@@ -26,7 +27,7 @@ export interface PurchaseRequest {
   quote_id?: string;
   quote_expires_at?: string;
   quoted_amount?: number;
-  enrollment_id?: string;
+  provider?: 'reap' | 'kwal';
   checkout_id?: string;
   order_id?: string;
   final_amount?: number;
@@ -42,5 +43,6 @@ export interface CreatePurchaseRequestInput {
   contact_name?: string;
   item_description: string;
   max_amount?: number;
+  max_currency?: string;
   currency?: string;
 }

@@ -6,7 +6,7 @@
 
 import {supabase} from './supabase';
 import type {Contact, ContactInput} from '../types/contact';
-import type {ShippingAddress} from '../types/reap';
+import type {ShippingAddress} from '../types/commerce';
 
 const E164_PATTERN = /^\+[1-9]\d{6,14}$/;
 
@@ -106,7 +106,7 @@ export function hasShippingAddress(contact: Contact): boolean {
 }
 
 /**
- * Convierte el contacto al shippingAddress que espera Reap.
+ * Convierte el contacto al shippingAddress de la cotización.
  */
 export function toShippingAddress(contact: Contact): ShippingAddress | undefined {
   if (!hasShippingAddress(contact)) return undefined;
