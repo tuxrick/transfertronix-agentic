@@ -4,6 +4,8 @@ const config = {
   port: Number(process.env.PORT || 3000),
   // reap | kwal
   paymentProvider: (process.env.PAYMENT_PROVIDER || 'reap').toLowerCase(),
+  // Simulates quotes/checkouts only when the Reap sandbox cannot quote
+  demoFallback: process.env.DEMO_FALLBACK === 'true',
   reap: {
     apiKey: process.env.REAP_API_KEY || '',
     baseUrl: process.env.REAP_BASE_URL || 'https://mx.sandbox.api.reap.global',

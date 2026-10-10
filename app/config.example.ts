@@ -16,7 +16,7 @@ export const config = {
   // Gemini AI
   gemini: {
     apiKey: 'tu_gemini_api_key_aqui',
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.8-flash',
   },
 
   // Backend (proxy hacia Reap; prodUrl debe ser HTTPS para el returnUrl)

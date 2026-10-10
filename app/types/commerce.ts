@@ -46,6 +46,8 @@ export interface ShippingAddress {
 
 export interface Quote {
   id: string;
+  // true cuando el sandbox no pudo cotizar y el backend simuló la cotización
+  demo?: boolean;
   subtotal?: Money;
   shipping?: Money;
   tax?: Money;
@@ -59,6 +61,7 @@ export type CheckoutStatus = 'REQUIRES_ACTION' | 'PROCESSING' | 'COMPLETED' | 'F
 
 export interface Checkout {
   id: string;
+  demo?: boolean;
   status: CheckoutStatus;
   approvalUrl?: string;
   approvalExpiresAt?: string;

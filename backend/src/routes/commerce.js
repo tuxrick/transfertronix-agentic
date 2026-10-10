@@ -65,7 +65,7 @@ router.post('/products/search', async (req, res) => {
 
 // Quotes
 router.post('/quotes', async (req, res) => {
-  const { productId, variantId, quantity, externalCheckout, shippingAddress } = req.body || {};
+  const { productId, variantId, quantity, externalCheckout, shippingAddress, price } = req.body || {};
   if (!variantId && !productId && !externalCheckout) {
     throw httpError(400, 'VALIDATION_ERROR', 'variantId, productId o externalCheckout es requerido');
   }
@@ -77,6 +77,7 @@ router.post('/quotes', async (req, res) => {
     quantity,
     externalCheckout,
     shippingAddress,
+    price,
     email: req.user.email,
   });
   res.status(201).json(quote);

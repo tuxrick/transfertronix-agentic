@@ -79,6 +79,7 @@ function formatQuote(quote: Quote) {
   if (quote.tax) lines.push(`Impuestos: ${formatMoney(quote.tax.amount, quote.tax.currency)}`);
   quote.discounts.forEach(d => lines.push(`${d.name}: -${formatMoney(d.amount.amount, d.amount.currency)}`));
   lines.push(`\nTotal: ${formatMoney(quote.total.amount, quote.total.currency)}`);
+  if (quote.demo) lines.push('\n⚠️ Cotización simulada: el sandbox de Reap no pudo cotizar');
   return lines.join('\n');
 }
 
@@ -214,7 +215,8 @@ export default function ChatScreen({navigation}: Props) {
             `✅ ¡Compra confirmada!\n\n📦 ${synced.product_snapshot?.name || synced.item_description}\n` +
               `👤 Para: ${synced.contact_name || 'ti'}\n` +
               `💰 ${formatMoney(synced.final_amount ?? synced.quoted_amount ?? 0, synced.currency)}\n` +
-              `🧾 Orden: ${synced.order_id}`,
+              `🧾 Orden: ${synced.order_id}` +
+              (synced.product_snapshot?.demo ? '\n\n⚠️ Compra simulada (sandbox de Reap sin cotizaciones)' : ''),
             'ai',
           );
         } else {

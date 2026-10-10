@@ -9,6 +9,7 @@ import type {
   Checkout,
   ExternalCheckout,
   Merchant,
+  Money,
   PaymentProviderName,
   PaymentSetup,
   ProductSearchResult,
@@ -80,6 +81,7 @@ export const createQuote = (input: {
   quantity?: number;
   externalCheckout?: ExternalCheckout;
   shippingAddress?: ShippingAddress;
+  price?: Money;
 }) => request<Quote>('POST', '/quotes', input);
 
 export const getQuote = (id: string) => request<Quote>('GET', `/quotes/${id}`);

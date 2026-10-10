@@ -84,12 +84,13 @@ export async function quotePurchase(
     variantId: product.variantId,
     externalCheckout: product.externalCheckout,
     shippingAddress: contact ? toShippingAddress(contact) : undefined,
+    price: product.price,
   });
 
   const updated = await update(request.id, {
     product_id: product.id,
     variant_id: product.variantId,
-    product_snapshot: {name: product.name, merchant: product.merchant, imageUrl: product.imageUrl},
+    product_snapshot: {name: product.name, merchant: product.merchant, imageUrl: product.imageUrl, demo: quote.demo},
     quote_id: quote.id,
     quote_expires_at: quote.expiresAt,
     quoted_amount: quote.total.amount,

@@ -4,6 +4,7 @@
  */
 const agentic = require('../reap/agentic');
 const { httpError } = require('../middleware/errors');
+const demo = require('./demoFallback');
 
 const name = 'reap';
 
@@ -61,7 +62,18 @@ async function searchProducts({ query, country, currency, maxPrice, merchantName
 const QUOTE_RETRY_ATTEMPTS = 3;
 const QUOTE_RETRY_DELAY_MS = 3000;
 
-async function createQuote({ variantId, quantity = 1, externalCheckout, email, shippingAddress }) {
+async function createQuote({ variantId, quantity = 1, externalCheckout, email, shippingAddress, price }) {
+  try {
+    return await createReapQuote({ variantId, quantity, externalCheckout, email, shippingAddress });
+  } catch (error) {
+    const demoQuote = error.code === 'QUOTE_TEMPORARILY_UNAVAILABLE' && demo.isEnabled() && demo.createQuote({ price, quantity });
+    if (!demoQuote) throw error;
+    console.warn('Reap no pudo cotizar; usando cotización demo');
+    return demoQuote;
+  }
+}
+
+async function createReapQuote({ variantId, quantity, externalCheckout, email, shippingAddress }) {
   for (let attempt = 1; ; attempt++) {
     try {
       const quote = await agentic.createQuote({
@@ -80,6 +92,7 @@ async function createQuote({ variantId, quantity = 1, externalCheckout, email, s
 }
 
 async function getQuote(id) {
+  if (demo.isDemoQuote(id)) return demo.getQuote(id);
   return normalizeQuote(await agentic.getQuote(id));
 }
 
@@ -92,10 +105,12 @@ async function createCheckout({ quoteId, user, returnUrl }) {
   if (!enrollment) {
     throw httpError(409, 'NO_PAYMENT_METHOD', 'Agrega una tarjeta en Métodos de pago antes de comprar');
   }
+  if (demo.isDemoQuote(quoteId)) return demo.createCheckout(quoteId);
   return normalizeCheckout(await agentic.createCheckout({ quoteId, enrollmentId: enrollment.id, returnUrl }));
 }
 
 async function getCheckout(id) {
+  if (demo.isDemoCheckout(id)) return demo.getCheckout(id);
   return normalizeCheckout(await agentic.getCheckout(id));
 }
 
