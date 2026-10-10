@@ -340,7 +340,7 @@ export default function ChatScreen({navigation}: Props) {
       query: request.item_description,
       country: contact?.country || DEFAULT_COUNTRY,
       currency: request.currency,
-      maxPrice: request.max_amount,
+      // No price filter: options over the cap are shown flagged and the server blocks them at checkout.
       limit: 3,
     });
 
@@ -349,11 +349,20 @@ export default function ChatScreen({navigation}: Props) {
       return;
     }
 
+    const overCap = (p: Product) =>
+      Boolean(
+        request.max_amount && p.price && p.price.currency === (request.max_currency || request.currency) &&
+          p.price.amount > Number(request.max_amount),
+      );
     const lines = result.products.map((p, i) => {
       const price = p.price ? ` · ${formatMoney(p.price.amount, p.price.currency)}` : '';
-      return `${i + 1}. ${p.name}\n   ${p.merchant || 'Comercio compatible'}${price}`;
+      const flag = overCap(p) ? '\n   ⚠️ Excede el tope' : '';
+      return `${i + 1}. ${p.name}\n   ${p.merchant || 'Comercio compatible'}${price}${flag}`;
     });
-    await addMessage(`Encontré estas opciones:\n\n${lines.join('\n\n')}`, 'ai', {
+    const cap = request.max_amount
+      ? `\n\n💰 Tope: ${formatMoney(Number(request.max_amount), request.max_currency || request.currency)}`
+      : '';
+    await addMessage(`Encontré estas opciones:\n\n${lines.join('\n\n')}${cap}`, 'ai', {
       actions: result.products.map((p, i) => ({
         label: `Elegir ${i + 1}`,
         onPress: () => selectProduct(request, p, contact),
