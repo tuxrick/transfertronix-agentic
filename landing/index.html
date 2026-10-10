@@ -128,12 +128,21 @@
     .flow i { color: var(--ok); font-style: normal; }
     .flow u { color: var(--danger); text-decoration: none; }
 
+    /* Demo */
+    .demo { display: grid; grid-template-columns: 1fr 380px; gap: 56px; align-items: center; }
+    .demo-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-bottom: 28px; }
+    .demo-list li { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #cbd5e1; }
+    .demo-list span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--accent-soft); color: #93c5fd; font-weight: 700; font-size: 13px; flex: none; }
+    .video-frame { border-radius: 28px; padding: 8px; background: linear-gradient(160deg, #334155, #0f172a); box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(148,163,184,0.15); }
+    .video-frame video { width: 100%; display: block; border-radius: 22px; background: #000; aspect-ratio: 9 / 16; }
+
     footer { padding: 48px 0; border-top: 1px solid rgba(51,65,85,0.5); color: var(--dim); font-size: 14px; }
     footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 
     @media (max-width: 900px) {
       nav ul { display: none; }
-      .hero .wrap, .guard { grid-template-columns: 1fr; }
+      .hero .wrap, .guard, .demo { grid-template-columns: 1fr; }
+      .video-frame { max-width: 380px; margin: 0 auto; }
       .hero { padding-top: 56px; }
       .problem, .cases, .stack { grid-template-columns: 1fr; }
       .screens { grid-template-columns: 1fr 1fr; }
@@ -151,6 +160,7 @@
     <div class="wrap">
       <a href="#" class="logo">⚡ <b>Transfer<span>tronix</span></b></a>
       <ul>
+        <li><a href="#demo">Demo</a></li>
         <li><a href="#como-funciona">Cómo funciona</a></li>
         <li><a href="#control">Control de gasto</a></li>
         <li><a href="#casos">Casos de uso</a></li>
@@ -167,8 +177,8 @@
         <h1>Reapli compra por tu equipo <em>sin salirse del presupuesto</em></h1>
         <p class="lead">Reapli es el agente de compras de Transfertronix. Pídele en lenguaje natural lo que alguien necesita: busca en comercios compatibles, cotiza con envío real y paga con Reap Agentic Payments, siempre dentro del tope que definiste y sin tocar nunca tu tarjeta.</p>
         <div class="cta">
-          <a class="btn btn-primary" href="#como-funciona">Ver cómo funciona →</a>
-          <a class="btn btn-ghost" href="#casos">Casos de uso</a>
+          <a class="btn btn-primary" href="#demo">▶ Ver la demo</a>
+          <a class="btn btn-ghost" href="#como-funciona">Cómo funciona</a>
         </div>
         <div class="hero-stats">
           <div><strong>152</strong>comercios compatibles</div>
@@ -179,6 +189,30 @@
       <div class="phone"><img src="img/chat.jpg" alt="Chat de Transfertronix con ejemplos de solicitudes de compra"></div>
     </div>
   </header>
+
+  <section id="demo">
+    <div class="wrap demo">
+      <div>
+        <div class="eyebrow">Demo</div>
+        <h2>Reapli en acción, de punta a punta</h2>
+        <p class="section-lead">Grabado en un iPhone real contra el sandbox de Reap: contactos con tope, tarjeta registrada en Reap con passkey de Visa, compras con cotización real y el servidor bloqueando lo que excede el presupuesto.</p>
+        <ul class="demo-list">
+          <li><span>1</span>Contactos con dirección y tope</li>
+          <li><span>2</span>Tarjeta segura en Reap</li>
+          <li><span>3</span>Compra aprobada con passkey</li>
+          <li><span>4</span>El tope bloquea la compra</li>
+          <li><span>5</span>Solicitudes del equipo</li>
+          <li><span>6</span>Historial y trazabilidad</li>
+        </ul>
+        <a class="btn btn-ghost" href="/demo" target="_blank" rel="noopener">Abrir el video en pantalla completa ↗</a>
+      </div>
+      <div class="video-frame">
+        <video controls playsinline preload="metadata" poster="video/poster.jpg">
+          <source src="video/transfertronix-demo.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </section>
 
   <section class="alt">
     <div class="wrap">
