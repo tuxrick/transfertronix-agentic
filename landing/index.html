@@ -136,12 +136,20 @@
     .video-frame { border-radius: 28px; padding: 8px; background: linear-gradient(160deg, #334155, #0f172a); box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(148,163,184,0.15); }
     .video-frame video { width: 100%; display: block; border-radius: 22px; background: #000; aspect-ratio: 9 / 16; }
 
+    /* Download */
+    .download { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    .download-meta { margin-top: 14px; font-size: 13px; color: var(--dim); }
+    .steps-install { list-style: none; counter-reset: inst; display: grid; gap: 12px; }
+    .steps-install li { counter-increment: inst; position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px 16px 58px; font-size: 15px; color: var(--muted); }
+    .steps-install li::before { content: counter(inst); position: absolute; left: 16px; top: 14px; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: #93c5fd; font-weight: 700; }
+    .steps-install strong { color: var(--text); }
+
     footer { padding: 48px 0; border-top: 1px solid rgba(51,65,85,0.5); color: var(--dim); font-size: 14px; }
     footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 
     @media (max-width: 900px) {
       nav ul { display: none; }
-      .hero .wrap, .guard, .demo { grid-template-columns: 1fr; }
+      .hero .wrap, .guard, .demo, .download { grid-template-columns: 1fr; }
       .video-frame { max-width: 380px; margin: 0 auto; }
       .hero { padding-top: 56px; }
       .problem, .cases, .stack { grid-template-columns: 1fr; }
@@ -161,6 +169,7 @@
       <a href="#" class="logo">⚡ <b>Transfer<span>tronix</span></b></a>
       <ul>
         <li><a href="#demo">Demo</a></li>
+        <li><a href="#descargar">Descargar</a></li>
         <li><a href="#como-funciona">Cómo funciona</a></li>
         <li><a href="#control">Control de gasto</a></li>
         <li><a href="#casos">Casos de uso</a></li>
@@ -178,7 +187,7 @@
         <p class="lead">Reapli es el agente de compras de Transfertronix. Pídele en lenguaje natural lo que alguien necesita: busca en comercios compatibles, cotiza con envío real y paga con Reap Agentic Payments, siempre dentro del tope que definiste y sin tocar nunca tu tarjeta.</p>
         <div class="cta">
           <a class="btn btn-primary" href="#demo">▶ Ver la demo</a>
-          <a class="btn btn-ghost" href="#como-funciona">Cómo funciona</a>
+          <a class="btn btn-ghost" href="#descargar">⬇ Descargar para Android</a>
         </div>
         <div class="hero-stats">
           <div><strong>152</strong>comercios compatibles</div>
@@ -328,6 +337,24 @@
                  └─► <b>/checkouts</b>  el servidor relee la cotización
                       ├─ total &gt; tope o moneda distinta  ──► <u>bloqueado</u>
                       └─ aprobación en la página de Reap ──► deep link a la app ──► <i>completed + orderId</i></div>
+    </div>
+  </section>
+
+  <section class="alt" id="descargar">
+    <div class="wrap download">
+      <div>
+        <div class="eyebrow">Pruébalo</div>
+        <h2>Descarga Transfertronix para Android</h2>
+        <p class="section-lead">Instala la app y habla con Reapli. Corre contra el sandbox de Reap: los pagos son simulados y no se mueve dinero real.</p>
+        <a class="btn btn-primary" href="/download/transfertronix.apk" download>⬇ Descargar APK</a>
+        <p class="download-meta">Versión 1.0 · 30 MB · Android 7.0 o superior</p>
+      </div>
+      <ol class="steps-install">
+        <li><strong>Descarga el APK</strong> desde tu teléfono Android.</li>
+        <li><strong>Permite la instalación</strong> cuando Android lo pida: "Instalar apps desconocidas" para tu navegador.</li>
+        <li><strong>Abre Transfertronix</strong> e inicia sesión con tu correo y el código de 6 dígitos.</li>
+        <li><strong>Registra una tarjeta de prueba</strong> en Métodos de pago (tarjetas de prueba del sandbox de Reap) y pídele algo a Reapli.</li>
+      </ol>
     </div>
   </section>
 
